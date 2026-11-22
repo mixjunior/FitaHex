@@ -64,6 +64,7 @@ public class Library {
  public bool SidebarCollapsed, DiscordEnabled=true;
  public bool AutoScan=true;
  public bool WindowsSetupShown, TourShown;
+ public string Language="";
  public bool RestoreArchivedGames(){
   if(ArchivedGames.Count==0)return false;
   var ids=new HashSet<string>(Games.Select(game=>game.Id),StringComparer.OrdinalIgnoreCase);

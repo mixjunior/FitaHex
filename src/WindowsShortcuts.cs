@@ -48,17 +48,17 @@ static class WindowsShortcuts {
   if(Owns(path))RegisterStartup(path,Application.ExecutablePath,StartupCopy);
  }
  static void RegisterStartup(string path,string executable,string copy){
-  if(File.Exists(path)&&!Owns(path))throw new IOException("Já existe um atalho com esse nome na pasta Inicializar.");
+  if(File.Exists(path)&&!Owns(path))throw new IOException(UiLanguage.Text("Já existe um atalho com esse nome na pasta Inicializar."));
   var target=RefreshStartupCopy(executable,copy);
   if(!String.Equals(ManagedTarget(path),target,StringComparison.OrdinalIgnoreCase))Set(path,true,target);
  }
  static void Set(string path,bool enabled,string target=null){
-  if(path=="")throw new IOException("A pasta do Windows não está disponível.");
+  if(path=="")throw new IOException(UiLanguage.Text("A pasta do Windows não está disponível."));
   if(!enabled){
    if(Owns(path))File.Delete(path);
    return;
   }
-  if(File.Exists(path)&&!Owns(path))throw new IOException("Já existe um atalho com esse nome em "+Path.GetDirectoryName(path)+".");
+  if(File.Exists(path)&&!Owns(path))throw new IOException(UiLanguage.Text("Já existe um atalho com esse nome em ")+Path.GetDirectoryName(path)+".");
   target=target??Application.ExecutablePath;
   Directory.CreateDirectory(Path.GetDirectoryName(path));
   var pending=Path.Combine(Path.GetDirectoryName(path),Guid.NewGuid().ToString("N")+".lnk");
@@ -89,7 +89,7 @@ static class WindowsShortcuts {
    desktop=Add(panel,"Criar atalho na Área de Trabalho",desktopPath);
   }
   static CheckBox Add(Control panel,string label,string path){
-   var box=new CheckBox{Text=label,AutoSize=true,Enabled=path!="",Margin=new Padding(3,7,3,7)};
+   var box=new CheckBox{Text=UiLanguage.Text(label),AutoSize=true,Enabled=path!="",Margin=new Padding(3,7,3,7)};
    try{box.Checked=Owns(path);}
    catch(COMException){box.Enabled=false;}
    panel.Controls.Add(box);return box;
@@ -113,26 +113,26 @@ static class WindowsShortcuts {
  internal static void Verify(string fixture){
   var path=Path.Combine(fixture,"FitaHex.lnk");
   Set(path,true);
-  if(!Owns(path))throw new IOException("Criação de atalho.");
+  if(!Owns(path))throw new IOException(UiLanguage.Text("Criação de atalho."));
   var copy=Path.Combine(fixture,"installed",ProductIdentity.Name+".exe");
   RegisterStartup(path,Application.ExecutablePath,copy);
   if(!File.Exists(copy)||!String.Equals(ManagedTarget(path),copy,StringComparison.OrdinalIgnoreCase))
-   throw new IOException("Alvo estável de inicialização.");
+   throw new IOException(UiLanguage.Text("Alvo estável de inicialização."));
   RegisterStartup(path,copy,copy);
   Set(path,false);
-  if(File.Exists(path))throw new IOException("Remoção de atalho.");
+  if(File.Exists(path))throw new IOException(UiLanguage.Text("Remoção de atalho."));
  }
  internal static void FirstRun(Library library){
   if(library.WindowsSetupShown)return;
-  using(var form=new Form{Text="Configuração inicial · "+ProductIdentity.Name,ClientSize=new Size(460,190),
+  using(var form=new Form{Text=UiLanguage.Text("Configuração inicial · ")+ProductIdentity.Name,ClientSize=new Size(460,190),
       StartPosition=FormStartPosition.CenterScreen,FormBorderStyle=FormBorderStyle.FixedDialog,
       Font=Skin.UiFont(10),MaximizeBox=false,MinimizeBox=false,Padding=new Padding(18)}){
    var controls=new FlowLayoutPanel{Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false};
-   controls.Controls.Add(new Label{Text="Como você quer abrir o FitaHex?",AutoSize=true,Font=Skin.HeadingFont(16),Margin=new Padding(3,3,3,9)});
+   controls.Controls.Add(new Label{Text=UiLanguage.Text("Como você quer abrir o FitaHex?"),AutoSize=true,Font=Skin.HeadingFont(16),Margin=new Padding(3,3,3,9)});
    var options=new Options(controls);
    var footer=new FlowLayoutPanel{Dock=DockStyle.Bottom,Height=39,FlowDirection=FlowDirection.RightToLeft};
-   var confirm=new Button{Text="Continuar",AutoSize=true};
-   var skip=new Button{Text="Pular",AutoSize=true,DialogResult=DialogResult.Cancel};
+   var confirm=new Button{Text=UiLanguage.Text("Continuar"),AutoSize=true};
+   var skip=new Button{Text=UiLanguage.Text("Pular"),AutoSize=true,DialogResult=DialogResult.Cancel};
    confirm.Click+=(sender,args)=>{if(options.Apply(form))form.DialogResult=DialogResult.OK;};
    footer.Controls.Add(confirm);footer.Controls.Add(skip);
    form.Controls.Add(controls);form.Controls.Add(footer);

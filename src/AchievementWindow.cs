@@ -33,18 +33,18 @@ sealed class AchievementWindow : Form {
    .GroupBy(item=>item.Hidden?"hidden:"+item.Id:GameProgress.TitleKey(item.Name)).Select(group=>group.OrderByDescending(item=>item.Unlocked).ThenByDescending(item=>item.Icon!="").First())
    .OrderBy(entry=>entry.Name,StringComparer.CurrentCultureIgnoreCase).ToArray();
 
-  Text="Conquistas · "+game.Name;StartPosition=FormStartPosition.CenterParent;
+  Text=UiLanguage.Text("Conquistas · ")+game.Name;StartPosition=FormStartPosition.CenterParent;
   ClientSize=new Size(720,550);MinimumSize=new Size(520,415);BackColor=theme.Background;ForeColor=theme.Text;
   Font=Skin.UiFont(10);Padding=new Padding(18);MinimizeBox=false;
   var title=new Label{Text=game.Name,Font=Skin.HeadingFont(21),Dock=DockStyle.Top,Height=51,AutoEllipsis=true};
-  var summary=new Label{Text=reports.Length==0?"Nenhuma plataforma forneceu dados de conquistas.":String.Join("   ·   ",editions.Where(g=>g.Achievements!=null)
+  var summary=new Label{Text=reports.Length==0?UiLanguage.Text("Nenhuma plataforma forneceu dados de conquistas."):String.Join("   ·   ",editions.Where(g=>g.Achievements!=null)
    .Select(g=>g.Source+"  "+g.Achievements.Unlocked+"/"+g.Achievements.Total)),Dock=DockStyle.Top,Height=33,ForeColor=theme.Muted,AutoEllipsis=true};
   var filters=new SoftFlow{Dock=DockStyle.Top,Height=45};
-  earned=Button(filters,reports.Length==0?"Desbloqueadas":"Desbloqueadas · "+expectedEarned,()=>Display(true));
-  pending=Button(filters,reports.Length==0?"Pendentes":"Pendentes · "+expectedPending,()=>Display(false));
+  earned=Button(filters,reports.Length==0?UiLanguage.Text("Desbloqueadas"):UiLanguage.Text("Desbloqueadas")+" · "+expectedEarned,()=>Display(true));
+  pending=Button(filters,reports.Length==0?UiLanguage.Text("Pendentes"):UiLanguage.Text("Pendentes")+" · "+expectedPending,()=>Display(false));
 
   items.Dock=DockStyle.Fill;items.BorderStyle=BorderStyle.None;items.IntegralHeight=false;items.BackColor=theme.Background;
-  items.ForeColor=theme.Text;items.DrawMode=DrawMode.OwnerDrawFixed;items.ItemHeight=68;items.AccessibleName="Lista de conquistas";
+  items.ForeColor=theme.Text;items.DrawMode=DrawMode.OwnerDrawFixed;items.ItemHeight=68;items.AccessibleName=UiLanguage.Text("Lista de conquistas");
   items.DrawItem+=DrawAchievement;
   note.Dock=DockStyle.Bottom;note.Height=34;note.TextAlign=ContentAlignment.MiddleLeft;note.ForeColor=theme.Muted;note.AutoEllipsis=true;
 
@@ -54,7 +54,7 @@ sealed class AchievementWindow : Form {
   if(steam!=null){
    Button(actions,"Ver lista completa na Steam",()=>{
     try{SocialPlatforms.Open("https://steamcommunity.com/my/stats/"+steam.StoreId.Substring(6)+"/?tab=achievements");}
-    catch(System.ComponentModel.Win32Exception){MessageBox.Show(this,"Não foi possível abrir a Steam.","Conquistas");}
+    catch(System.ComponentModel.Win32Exception){MessageBox.Show(this,UiLanguage.Text("Não foi possível abrir a Steam."),UiLanguage.Text("Conquistas"));}
    });
   }
   Controls.Add(items);Controls.Add(note);Controls.Add(actions);Controls.Add(filters);Controls.Add(summary);Controls.Add(title);
@@ -74,15 +74,15 @@ sealed class AchievementWindow : Form {
   try{items.Items.Clear();items.Items.AddRange(rows.Cast<object>().ToArray());}
   finally{items.EndUpdate();}
   int expected=unlocked?expectedEarned:expectedPending;
-  note.Text=expected>rows.Length?"O cache da Steam fornece "+rows.Length+" de "+expected+" nesta seção.":rows.Length==0?"Nenhuma conquista disponível nesta seção.":"";
+  note.Text=expected>rows.Length?(UiLanguage.English?String.Format("The Steam cache provides {0} of {1} achievements in this section.",rows.Length,expected):"O cache da Steam fornece "+rows.Length+" de "+expected+" nesta seção."):rows.Length==0?UiLanguage.Text("Nenhuma conquista disponível nesta seção."):"";
   note.Visible=note.Text!="";
  }
 
  internal void VerifySections(){
   Display(true);
-  if(items.Items.Count!=1||!((AchievementEntry)items.Items[0]).Unlocked)throw new InvalidOperationException("Conquistas desbloqueadas.");
+  if(items.Items.Count!=1||!((AchievementEntry)items.Items[0]).Unlocked)throw new InvalidOperationException(UiLanguage.Text("Conquistas desbloqueadas."));
   Display(false);
-  if(items.Items.Count!=1||((AchievementEntry)items.Items[0]).Unlocked)throw new InvalidOperationException("Conquistas pendentes.");
+  if(items.Items.Count!=1||((AchievementEntry)items.Items[0]).Unlocked)throw new InvalidOperationException(UiLanguage.Text("Conquistas pendentes."));
   using(var image=new Bitmap(Width,Height)){
    DrawToBitmap(image,new Rectangle(0,0,Width,Height));
    image.Save(Path.Combine(Storage.Root,"achievements.png"));

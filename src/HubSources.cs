@@ -34,7 +34,7 @@ public partial class Hub {
  void SetupFilters(){
   sourceButton=Action(toolbar,"Filtros      ",ShowFilters);
   sourceButton.Glyph="filter";sourceButton.Width=97;sourceButton.AutoSize=false;
-  sourceButton.AccessibleName="Filtros de pesquisa";
+  sourceButton.AccessibleName=UiLanguage.Text("Filtros de pesquisa");
  }
  IEnumerable<KeyValuePair<string,string>> LauncherFilters(){
   foreach(var source in Launchers.Concat(new[]{"Emulador",WithoutLauncher}))
@@ -72,7 +72,7 @@ public partial class Hub {
  }
  void AddFilterColumn(TableLayoutPanel columns,int column,string name,IEnumerable<KeyValuePair<string,string>> options,HashSet<string> values,List<Action> resets){
   var box=new SoftPanel{Dock=DockStyle.Fill,Padding=new Padding(4)};
-  var title=new Label{Text=name,Dock=DockStyle.Top,Height=31,Font=Skin.HeadingFont(11)};
+  var title=new Label{Text=UiLanguage.Text(name),Dock=DockStyle.Top,Height=31,Font=Skin.HeadingFont(11)};
   var choices=new SoftFlow{Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true};
   foreach(var item in options){
    var option=item;HubButton checkbox=null;
@@ -81,6 +81,7 @@ public partial class Hub {
     checkbox.Active=values.Contains(option.Key);checkbox.Glyph=checkbox.Active?"check":"box";checkbox.Invalidate();
     RefreshFilters();
    });
+   if(column==2)checkbox.Text=option.Value;
    checkbox.Sidebar=true;checkbox.AutoSize=false;checkbox.Margin=new Padding(0,1,0,1);checkbox.Height=30;checkbox.Width=137;
    choices.Resize+=(s,e)=>checkbox.Width=Math.Max(100,choices.ClientSize.Width-SystemInformation.VerticalScrollBarWidth-3);
    checkbox.Active=values.Contains(option.Key);checkbox.Glyph=checkbox.Active?"check":"box";checkbox.AccessibleName=option.Value;
@@ -103,7 +104,7 @@ public partial class Hub {
  }
  void UpdateFilterLabel(){
   int count=chosenSources.Count+chosenCollections.Count+chosenStates.Count;
-  sourceButton.Text=count==0?"Filtros":"Filtros · "+count;
+  sourceButton.Text=count==0?UiLanguage.Text("Filtros"):UiLanguage.Text("Filtros · ")+count;
   Clear(filterChips);
   if(count>0){
    var names=LauncherFilters().ToDictionary(pair=>pair.Key,pair=>pair.Value,StringComparer.OrdinalIgnoreCase);
@@ -118,7 +119,7 @@ public partial class Hub {
  }
  void AddFilterChip(HashSet<string> values,string value,string label){
   var chip=Action(filterChips,label+"  ×",()=>{values.Remove(value);RefreshFilters();});
-  chip.AccessibleName="Remover filtro "+label;
+  chip.AccessibleName=UiLanguage.Text("Remover filtro ")+label;
  }
  static bool BelongsTo(Game g,Shelf shelf){
   if(!shelf.Smart)return shelf.Ids.Contains(g.Id);
@@ -166,43 +167,43 @@ public partial class Hub {
   g.Restore(state);
  }
  internal void TestSources(){
-  if(navigation.ContainsKey("Steam")||navigation.ContainsKey("Epic Games"))throw new InvalidOperationException("Origens continuam no menu lateral.");
+  if(navigation.ContainsKey("Steam")||navigation.ContainsKey("Epic Games"))throw new InvalidOperationException(UiLanguage.Text("Origens continuam no menu lateral."));
   var sample="{\"title\":\"Example Game\",\"keyImages\":[{\"type\":\"DieselGameBoxTall\",\"url\":\"https://cdn2.epicgames.com/example.jpg\"},{\"type\":\"DieselGameBoxTall\",\"url\":\"https://evil.example/example.jpg\"}]}";
-  if(EpicArtwork.Portraits(sample,"Example Game").Count()!=1||EpicArtwork.Portraits(sample,"Outro jogo").Any())throw new InvalidOperationException("Arte Epic.");
-  if(SourceIcons.CommandFile("\"C:\\Example Files\\Launcher.exe\" \"%1\"")!=@"C:\Example Files\Launcher.exe")throw new InvalidOperationException("Ícone do launcher.");
-  using(var icon=SourceIcons.FromFile(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"explorer.exe")))if(icon==null)throw new InvalidOperationException("Ícone de executável.");
+  if(EpicArtwork.Portraits(sample,"Example Game").Count()!=1||EpicArtwork.Portraits(sample,"Outro jogo").Any())throw new InvalidOperationException(UiLanguage.Text("Arte Epic."));
+  if(SourceIcons.CommandFile("\"C:\\Example Files\\Launcher.exe\" \"%1\"")!=@"C:\Example Files\Launcher.exe")throw new InvalidOperationException(UiLanguage.Text("Ícone do launcher."));
+  using(var icon=SourceIcons.FromFile(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"explorer.exe")))if(icon==null)throw new InvalidOperationException(UiLanguage.Text("Ícone de executável."));
   using(var steam=LauncherMarks.Create("Steam"))using(var riot=LauncherMarks.Create(RiotGames.Source)){
-   if(steam.GetPixel(24,5).A==0||riot.GetPixel(24,19).A==0)throw new InvalidOperationException("Marcas Steam e Riot.");
+   if(steam.GetPixel(24,5).A==0||riot.GetPixel(24,19).A==0)throw new InvalidOperationException(UiLanguage.Text("Marcas Steam e Riot."));
   }
   var legacy=new Library();
   var old=new Game{Name="Jogo antigo",Category="RPG, Portáteis"};legacy.Games.Add(old);
-  if(!legacy.MigrateCategories()||legacy.MigrateCategories()||legacy.Shelves.Count!=2||legacy.Shelves.Any(s=>!s.Ids.Contains(old.Id)))throw new InvalidOperationException("Migração de categorias.");
-  if(CanRemove(new Game{StoreId="steam:123"})||!CanRemove(new Game{StoreId="rom:saved",Rom="game.gba"})||!CanRemove(new Game()))throw new InvalidOperationException("Proteção para jogos automáticos.");
-  if(NexusTheme.All.Length<8||NexusTheme.Find("Light").Background==NexusTheme.Find("NEXUS Dark").Background)throw new InvalidOperationException("Temas.");
+  if(!legacy.MigrateCategories()||legacy.MigrateCategories()||legacy.Shelves.Count!=2||legacy.Shelves.Any(s=>!s.Ids.Contains(old.Id)))throw new InvalidOperationException(UiLanguage.Text("Migração de categorias."));
+  if(CanRemove(new Game{StoreId="steam:123"})||!CanRemove(new Game{StoreId="rom:saved",Rom="game.gba"})||!CanRemove(new Game()))throw new InvalidOperationException(UiLanguage.Text("Proteção para jogos automáticos."));
+  if(NexusTheme.All.Length<8||NexusTheme.Find("Light").Background==NexusTheme.Find("NEXUS Dark").Background)throw new InvalidOperationException(UiLanguage.Text("Temas."));
 
   var previous=data.Games.ToList();
   try{
    data.Games.Add(new Game{Name="Filtro Epic",Source="Epic Games"});
    data.Games.Add(new Game{Name="Port",Source="Port"});
    Navigate("Jogos");SelectSource("Epic Games");
-   if(!sourceButton.Visible||list.Items.Count==0||list.Items.Cast<ListViewItem>().Any(item=>Origin((Game)item.Tag)!="Epic Games")||!list.Items.Cast<ListViewItem>().Any(item=>item.Text=="Filtro Epic"))throw new InvalidOperationException("Filtro de origem.");
+   if(!sourceButton.Visible||list.Items.Count==0||list.Items.Cast<ListViewItem>().Any(item=>Origin((Game)item.Tag)!="Epic Games")||!list.Items.Cast<ListViewItem>().Any(item=>item.Text=="Filtro Epic"))throw new InvalidOperationException(UiLanguage.Text("Filtro de origem."));
    var rom=new Game{Name="ROM de filtro",Rom=@"C:\ROMs\x.n64",Target=@"C:\emu\Project64.exe",Source="Emulador"};data.Games.Add(rom);
    SelectSource(EmulatorFilter+rom.Target);
-   if(navigation.ContainsKey("Emuladores")||list.Items.Count!=1||list.Items[0].Tag!=rom)throw new InvalidOperationException("Filtro de emulador.");
+   if(navigation.ContainsKey("Emuladores")||list.Items.Count!=1||list.Items[0].Tag!=rom)throw new InvalidOperationException(UiLanguage.Text("Filtro de emulador."));
    SelectSource(WithoutLauncher);
-   if(list.Items.Cast<ListViewItem>().Any(item=>Launchers.Contains(Origin((Game)item.Tag)))||!list.Items.Cast<ListViewItem>().Any(item=>item.Text=="Port"))throw new InvalidOperationException("Filtro de port.");
+   if(list.Items.Cast<ListViewItem>().Any(item=>Launchers.Contains(Origin((Game)item.Tag)))||!list.Items.Cast<ListViewItem>().Any(item=>item.Text=="Port"))throw new InvalidOperationException(UiLanguage.Text("Filtro de port."));
    SelectSource("");
    chosenSources.UnionWith(new[]{"Steam","Epic Games"});
    chosenStates.Add("Instalados");RefreshFilters();
    if(list.Items.Count==0||list.Items.Cast<ListViewItem>().Any(row=>!Installed((Game)row.Tag)||!chosenSources.Contains(Origin((Game)row.Tag))))
-    throw new InvalidOperationException("Filtros combinados.");
+    throw new InvalidOperationException(UiLanguage.Text("Filtros combinados."));
    chosenSources.Clear();chosenStates.Clear();RefreshFilters();
    var newest=new Game{Name="Mais recente",Last=DateTime.Now.AddDays(1)};
    data.Games.Add(newest);
    var fixtureShelf=new Shelf{Name="Coleção de teste"};fixtureShelf.Ids.Add(newest.Id);data.Shelves.Add(fixtureShelf);
    try{
     SelectCollection(fixtureShelf.Name);
-    if(list.Items.Count!=1||list.Items[0].Tag!=newest||!recentGame.Text.Contains(newest.Name))throw new InvalidOperationException("Coleções e jogo recente.");
+    if(list.Items.Count!=1||list.Items[0].Tag!=newest||!recentGame.Text.Contains(newest.Name))throw new InvalidOperationException(UiLanguage.Text("Coleções e jogo recente."));
    }finally{data.Shelves.Remove(fixtureShelf);SelectCollection("");}
   }finally{data.Games.Clear();data.Games.AddRange(previous);RefreshList();}
  }

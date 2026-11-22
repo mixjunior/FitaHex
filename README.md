@@ -4,6 +4,10 @@
 
 FitaHex is a portable Windows game hub. It brings together launcher games, standalone executables, and ROMs in a local library. Keep favorites, group games into collections, mark games as completed, and check your playtime and history.
 
+## Interface language
+
+FitaHex is available in English and Brazilian Portuguese. By default, it starts in Portuguese when Windows uses Portuguese, and in English for other Windows display languages. To change the language, go to **Settings → Appearance → Language** (Portuguese: **Configurações → Aparência → Idioma**), choose **Windows language**, **Português (Brasil)**, or **English**, and save. The app reopens in the selected language and keeps your library. Launcher pages in Social use the language set by each service.
+
 ## Getting started
 
 1. Keep the executable in a folder you can write to and open it. On the first run, choose whether to start it with Windows or create a desktop shortcut. You can skip the three-step tour and revisit it under **Configurações → Biblioteca → Ver mini tour**.

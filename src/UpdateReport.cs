@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -67,7 +67,7 @@ sealed class UpdateReport {
   report.ReadGames(new[]{installed,installed},new[]{installed,missing},new[]{installed});
   report.Cover("Steam");report.Time("Steam","Steam");report.ReadErrors("",new[]{"GOG Galaxy"},"");
   if(report.TotalGames!=2||report.TotalCovers!=1||report.Rows[0].Available!=1||report.Rows[1].Warnings.Count!=1||report.Rows[2].Warnings.Count!=1)
-   throw new InvalidOperationException("Resumo da atualização.");
+   throw new InvalidOperationException(UiLanguage.Text("Resumo da atualização."));
  }
 }
 
@@ -75,10 +75,10 @@ partial class Hub {
  void ShowUpdateReport(){
   var report=latestUpdate;
   if(report==null)return;
-  using(var dialog=new Form{Text="Resumo da atualização",ClientSize=new Size(905,421),MinimumSize=new Size(725,390),
+  using(var dialog=new Form{Text=UiLanguage.Text("Resumo da atualização"),ClientSize=new Size(905,421),MinimumSize=new Size(725,390),
    StartPosition=FormStartPosition.CenterParent,BackColor=BackColor,ForeColor=ForeColor,Font=Font,Padding=new Padding(19),
    MaximizeBox=false,MinimizeBox=false}){
-   var heading=new Label{Text="Resumo da atualização",Font=Skin.HeadingFont(21),Dock=DockStyle.Top,Height=44};
+   var heading=new Label{Text=UiLanguage.Text("Resumo da atualização"),Font=Skin.HeadingFont(21),Dock=DockStyle.Top,Height=44};
    var grid=new DataGridView{Dock=DockStyle.Fill,ReadOnly=true,AllowUserToAddRows=false,AllowUserToDeleteRows=false,AllowUserToResizeRows=false,
     RowHeadersVisible=false,MultiSelect=false,SelectionMode=DataGridViewSelectionMode.FullRowSelect,
     BackgroundColor=BackColor,BorderStyle=BorderStyle.None,CellBorderStyle=DataGridViewCellBorderStyle.SingleHorizontal,
@@ -90,20 +90,20 @@ partial class Hub {
    grid.AlternatingRowsDefaultCellStyle=new DataGridViewCellStyle(rows){BackColor=Skin.Mix(BackColor,surface,.45f)};
    grid.ColumnHeadersDefaultCellStyle=new DataGridViewCellStyle(rows){BackColor=surface};
    foreach(var title in new[]{"Launcher","Instalados","Disponíveis","Capas","Tempos","Fonte e avisos"})
-    grid.Columns.Add(new DataGridViewTextBoxColumn{HeaderText=title,Width=title=="Launcher"?157:86,SortMode=DataGridViewColumnSortMode.NotSortable});
+    grid.Columns.Add(new DataGridViewTextBoxColumn{HeaderText=UiLanguage.Text(title),Width=title=="Launcher"?157:86,SortMode=DataGridViewColumnSortMode.NotSortable});
    grid.Columns[5].AutoSizeMode=DataGridViewAutoSizeColumnMode.Fill;
    grid.Columns[5].DefaultCellStyle.WrapMode=DataGridViewTriState.True;
    foreach(var row in report.Rows){
-    var notes=new List<string>{row.LibrarySource};
-    if(row.TimeSources.Count>0)notes.Add("Tempos: "+String.Join(", ",row.TimeSources.OrderBy(name=>name)));
-    notes.AddRange(row.Warnings);
+    var notes=new List<string>{UiLanguage.Text(row.LibrarySource)};
+    if(row.TimeSources.Count>0)notes.Add(UiLanguage.Text("Tempos: ")+String.Join(", ",row.TimeSources.OrderBy(name=>name)));
+    notes.AddRange(row.Warnings.Select(UiLanguage.Text));
     grid.Rows.Add(row.Name,row.Installed,row.Available,row.Covers,row.Times,String.Join(" · ",notes));
    }
    var footer=new SoftFlow{Dock=DockStyle.Bottom,Height=44,FlowDirection=FlowDirection.RightToLeft};
    var close=Action(footer,"Fechar",()=>dialog.Close());close.Primary=true;dialog.AcceptButton=close;dialog.CancelButton=close;
    var caption=new Label{Dock=DockStyle.Bottom,Height=37,TextAlign=ContentAlignment.MiddleLeft,
-    Text=report.ArtFailed?"A busca de capas foi interrompida. O resumo mostra o que foi atualizado até a falha.":
-    "Disponíveis são jogos desinstalados encontrados no cache ou catálogo. Capas e tempos mostram as mudanças desta atualização."};
+    Text=UiLanguage.Text(report.ArtFailed?"A busca de capas foi interrompida. O resumo mostra o que foi atualizado até a falha.":
+    "Disponíveis são jogos desinstalados encontrados no cache ou catálogo. Capas e tempos mostram as mudanças desta atualização.")};
    dialog.Controls.Add(grid);dialog.Controls.Add(caption);dialog.Controls.Add(footer);dialog.Controls.Add(heading);
    dialog.Shown+=(sender,args)=>grid.ClearSelection();
    dialog.ShowDialog(this);
@@ -117,7 +117,7 @@ partial class Hub {
    "Em Adicionar, escolha um executável ou um emulador e a pasta das ROMs. Depois, selecione o jogo e clique em Jogar.",
    "Use Favoritos e Coleções para organizar a biblioteca. Marque jogos como zerados e consulte o Histórico para ver o progresso dos desinstalados."
   };
-  using(var dialog=new Form{Text="Mini tour do FitaHex",ClientSize=new Size(484,241),StartPosition=FormStartPosition.CenterParent,
+  using(var dialog=new Form{Text=UiLanguage.Text("Mini tour do FitaHex"),ClientSize=new Size(484,241),StartPosition=FormStartPosition.CenterParent,
    FormBorderStyle=FormBorderStyle.FixedDialog,BackColor=BackColor,ForeColor=ForeColor,Font=Font,Padding=new Padding(19),
    MaximizeBox=false,MinimizeBox=false}){
    var step=new Label{Dock=DockStyle.Top,Height=26,ForeColor=NexusTheme.Find(data.Theme).Muted};
@@ -126,8 +126,8 @@ partial class Hub {
    int page=0;
    var footer=new SoftFlow{Dock=DockStyle.Bottom,Height=44,FlowDirection=FlowDirection.RightToLeft,WrapContents=false};
    HubButton next=null,back=null;
-   Action show=()=>{step.Text=(page+1)+" de "+titles.Length;heading.Text=titles[page];description.Text=descriptions[page];
-    back.Enabled=page>0;next.Text=page+1==titles.Length?"Concluir":"Próximo";};
+   Action show=()=>{step.Text=(page+1)+UiLanguage.Text(" de ")+titles.Length;heading.Text=UiLanguage.Text(titles[page]);description.Text=UiLanguage.Text(descriptions[page]);
+    back.Enabled=page>0;next.Text=UiLanguage.Text(page+1==titles.Length?"Concluir":"Próximo");};
    next=Action(footer,"Próximo",()=>{if(page==titles.Length-1)dialog.Close();else{page++;show();}});next.Primary=true;
    back=Action(footer,"Anterior",()=>{if(page>0){page--;show();}});
    var skip=Action(footer,"Pular",()=>dialog.Close());

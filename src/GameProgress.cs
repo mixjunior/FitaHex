@@ -17,7 +17,7 @@ public sealed class AchievementProgress {
 }
 
 public sealed class AchievementEntry {
- public string Name="", Description="", Icon="";
+ public string Name="", Description=UiLanguage.Text(""), Icon="";
  public bool Unlocked, Hidden;
  public string Id="";
  public override string ToString(){return Name;}
@@ -37,9 +37,9 @@ static class GameProgress {
   var sample=ParseSteam(data);
   if(sample==null||sample.Unlocked!=3||sample.Total!=25||sample.Entries.Count!=2||
      sample.Entries.Single(x=>!x.Unlocked).Icon!="https://shared.steamstatic.com/achievement.jpg"||
-     sample.Entries.Single(x=>x.Unlocked).Name!="Primeiro passo")throw new IOException("Cache de conquistas Steam.");
+     sample.Entries.Single(x=>x.Unlocked).Name!="Primeiro passo")throw new IOException(UiLanguage.Text("Cache de conquistas Steam."));
   if(!Related(new Game{Name="Jogo™"},new Game{Name="Jogo"})||Related(new Game{Name="Jogo"},new Game{Name="Jogo Deluxe"}))
-   throw new IOException("Versões dos jogos.");
+   throw new IOException(UiLanguage.Text("Versões dos jogos."));
  }
  internal static string SteamAccount(string root){
   var login=Path.Combine(root,"config","loginusers.vdf");

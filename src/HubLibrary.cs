@@ -84,17 +84,17 @@ partial class Hub {
   else if(game.Source==XboxGames.Source)XboxGames.Launch(XboxGames.Target("Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App"),"");
   else if(game.Source=="EA app"||game.Source=="Battle.net"){
    var launcher=SourceIcons.Launcher(game.Source,game);
-   if(!File.Exists(launcher))throw new IOException("Abra "+game.Source+" para instalar este jogo.");
+   if(!File.Exists(launcher))throw new IOException(UiLanguage.Text("Abra ")+game.Source+" para instalar este jogo.");
    using(var process=Process.Start(new ProcessStartInfo(launcher){UseShellExecute=true})){}
    return;
   }
   else if(game.Source==RiotGames.Source){
    var path=SourceIcons.Launcher(game.Source,game);
-   if(!File.Exists(path)||!Path.GetFileName(path).Equals("RiotClientServices.exe",StringComparison.OrdinalIgnoreCase))throw new IOException("Abra o Riot Client para instalar este jogo.");
+   if(!File.Exists(path)||!Path.GetFileName(path).Equals("RiotClientServices.exe",StringComparison.OrdinalIgnoreCase))throw new IOException(UiLanguage.Text("Abra o Riot Client para instalar este jogo."));
    using(var process=Process.Start(new ProcessStartInfo(path){Arguments=game.Args,WorkingDirectory=Path.GetDirectoryName(path),UseShellExecute=false})){}
   }else{if(IsCustom(game))EditCustom(game,restore:true);else Edit(game);return;}
   installationChecks[game.Id]=DateTime.UtcNow.AddHours(3);
-  message.Text="Conclua a instalação na plataforma. "+ProductIdentity.Name+" vai verificar a biblioteca.";
+  message.Text=UiLanguage.Text("Conclua a instalação na plataforma. ")+ProductIdentity.Name+" vai verificar a biblioteca.";
  }
  async void CheckInstallations(bool refreshSteam){
   if(IsDisposed||checkingInstallations||scanning||xboxScanning)return;

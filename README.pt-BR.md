@@ -4,6 +4,10 @@
 
 O FitaHex é um hub portátil de jogos para Windows. Ele reúne jogos de launchers, executáveis avulsos e ROMs em uma biblioteca local. Você pode favoritar jogos, organizá-los em coleções, marcar os que zerou e consultar o tempo jogado e o histórico.
 
+## Idioma da interface
+
+O FitaHex está disponível em português do Brasil e inglês. Por padrão, ele abre em português quando esse é o idioma do Windows, e em inglês nos demais casos. Para mudar, abra **Configurações → Aparência → Idioma** (em inglês: **Settings → Appearance → Language**), escolha **Idioma do Windows**, **Português (Brasil)** ou **English** e salve. A janela reabre no idioma escolhido com a mesma biblioteca. As páginas dos launchers na área Social seguem o idioma de cada serviço.
+
 ## Primeiros passos
 
 1. Coloque o executável em uma pasta com permissão de escrita e abra o programa. Na primeira execução, escolha se ele deve iniciar junto com o Windows ou criar um atalho na Área de Trabalho. O mini tour tem três passos e pode ser pulado ou revisto em **Configurações → Biblioteca → Ver mini tour**.

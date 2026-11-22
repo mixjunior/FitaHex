@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 partial class Hub {
  string Choose(string title,string[] options){
-  using(var dialog=new Form{Text=title,StartPosition=FormStartPosition.CenterParent,ClientSize=new Size(435,Math.Min(450,34+44*options.Length)),BackColor=BackColor,ForeColor=ForeColor,Font=Font,FormBorderStyle=FormBorderStyle.FixedDialog,MaximizeBox=false,MinimizeBox=false}){
+  using(var dialog=new Form{Text=UiLanguage.Text(title),StartPosition=FormStartPosition.CenterParent,ClientSize=new Size(435,Math.Min(450,34+44*options.Length)),BackColor=BackColor,ForeColor=ForeColor,Font=Font,FormBorderStyle=FormBorderStyle.FixedDialog,MaximizeBox=false,MinimizeBox=false}){
    var buttons=new SoftFlow{Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true,Padding=new Padding(14)};
    string result=null;
    foreach(var option in options){
@@ -38,7 +38,7 @@ partial class Hub {
   try{
    var emulator=profile;
    if(emulator==null||!File.Exists(emulator.Target)){
-    using(var picker=new OpenFileDialog{Title="Escolha o executável do emulador",Filter="Emuladores (.exe)|*.exe",CheckFileExists=true}){
+    using(var picker=new OpenFileDialog{Title=UiLanguage.Text("Escolha o executável do emulador"),Filter="Emuladores (.exe)|*.exe",CheckFileExists=true}){
      if(picker.ShowDialog(this)!=DialogResult.OK)return;
      emulator=RomLibrary.Detect(picker.FileName);
     }
@@ -47,7 +47,7 @@ partial class Hub {
      var installed=Directory.Exists(directory)?Directory.GetFiles(directory,"*_libretro.dll"):new string[0];
      string corePath=installed.Length==1?installed[0]:null;
      if(corePath==null){
-      using(var core=new OpenFileDialog{Title="Escolha o núcleo do RetroArch para estes jogos",Filter="Núcleos do RetroArch|*.dll",
+      using(var core=new OpenFileDialog{Title=UiLanguage.Text("Escolha o núcleo do RetroArch para estes jogos"),Filter="Núcleos do RetroArch|*.dll",
        InitialDirectory=Directory.Exists(directory)?directory:emulator.Working,CheckFileExists=true}){
        if(core.ShowDialog(this)!=DialogResult.OK)return;
        corePath=core.FileName;
@@ -58,18 +58,18 @@ partial class Hub {
      emulator.Extensions=RomLibrary.CoreFormats(corePath);
     }
    }else emulator=RomLibrary.ImportProfile(emulator);
-   var folder=FolderPicker.Show(this,"Escolha a pasta principal das ROMs",emulator.Folder);
+   var folder=FolderPicker.Show(this,UiLanguage.Text("Escolha a pasta principal das ROMs"),emulator.Folder);
    if(folder==null)return;
    var format=emulator.Extensions;
-   message.Text="Procurando ROMs compatíveis…";
+   message.Text=UiLanguage.Text("Procurando ROMs compatíveis…");
    var files=await Task.Run(()=>RomLibrary.Find(folder,format));
    if(IsDisposed)return;
    if(files.Length==0){
     var help=emulator.Platform=="Nintendo 3DS"?" Se o jogo estiver em um pacote CIA, instale-o primeiro pelo próprio emulador.":"";
-    var choice=MessageBox.Show(this,"Não encontrei ROMs nesta pasta nem nas subpastas."+help+
-     "\n\nQuer escolher os arquivos diretamente?","Importar ROMs",MessageBoxButtons.YesNo,MessageBoxIcon.Information);
+    var choice=MessageBox.Show(this,UiLanguage.Text("Não encontrei ROMs nesta pasta nem nas subpastas.")+help+
+     "\n\n"+UiLanguage.Text("Quer escolher os arquivos diretamente?"),"Importar ROMs",MessageBoxButtons.YesNo,MessageBoxIcon.Information);
     if(choice!=DialogResult.Yes)return;
-    using(var picker=new OpenFileDialog{Title="Escolha os arquivos dos jogos",Filter="Todos os arquivos|*.*",
+    using(var picker=new OpenFileDialog{Title=UiLanguage.Text("Escolha os arquivos dos jogos"),Filter="Todos os arquivos|*.*",
      Multiselect=true,CheckFileExists=true,InitialDirectory=folder}){
      if(picker.ShowDialog(this)!=DialogResult.OK)return;
      files=picker.FileNames;
@@ -98,7 +98,7 @@ partial class Hub {
    if(games.Length!=0)selected=games[0];
    RefreshList();
    LoadArt(false);
-   Notify(games.Length==0?"Essas ROMs já estão na biblioteca.":games.Length+" ROMs importadas de "+emulator.Name+".");
+   Notify(games.Length==0?UiLanguage.Text("Essas ROMs já estão na biblioteca."):games.Length+UiLanguage.Text(" ROMs importadas de ")+emulator.Name+".");
   }catch(Exception error){if(!IsDisposed)Safe(()=>{throw new IOException(error.Message,error);});}
  }
  bool IsCustom(Game game){return game.Rom!=""||game.StoreId==""&&MatchesLauncher(game,WithoutLauncher);}
@@ -118,7 +118,7 @@ partial class Hub {
    if((original==null||pathChanged||portChanged)&&data.Games.Any(x=>x!=game&&(game.Rom!=""?
        String.Equals(x.Target,game.Target,StringComparison.OrdinalIgnoreCase)&&String.Equals(x.Rom,path,StringComparison.OrdinalIgnoreCase):
        x.Rom==""&&String.Equals(x.Target,path,StringComparison.OrdinalIgnoreCase)&&x.Source==game.Source&&(game.Source=="Port"?String.Equals(x.PortData,form.PortContent,StringComparison.OrdinalIgnoreCase)&&x.Args==form.PortArguments:x.Args==game.Args))))
-    throw new IOException("Esse arquivo já está cadastrado.");
+    throw new IOException(UiLanguage.Text("Esse arquivo já está cadastrado."));
    bool newCover=form.Cover!=""&&!String.Equals(form.Cover,game.Cover,StringComparison.OrdinalIgnoreCase);
    var cover=original==null&&restore&&!newCover?game.Cover:Storage.Asset(form.Cover);
    var badge=SourceIcons.Save(form.Badge);
@@ -182,12 +182,12 @@ sealed class CustomGameDialog : Form {
  internal string PortArguments{get{return portArgs==null?"":portArgs.Text.Trim();}}
  internal CustomGameDialog(Game game,bool adding,Color bg,Color surface,Color accent,bool launcherGame=false){
   this.launcherGame=launcherGame;oldRom=game.Rom;cover=game.Cover;badge=game.Badge;
-  Text=adding?"Adicionar "+(game.Source=="Manual"?"jogo de PC":game.Source.ToLowerInvariant()):"Editar "+game.Name;
+  Text=adding?UiLanguage.Text("Adicionar jogo"):UiLanguage.Text("Editar ")+game.Name;
   StartPosition=FormStartPosition.CenterParent;ClientSize=new Size(770,485);MinimumSize=new Size(630,450);Font=Skin.UiFont(10);BackColor=bg;ForeColor=bg.GetBrightness()<.5f?Color.White:Color.FromArgb(27,33,45);Padding=new Padding(22);
   var art=new SoftPanel{Dock=DockStyle.Left,Width=224,Padding=new Padding(0,0,19,0),AllowDrop=true};
-  preview=new PictureBox{Dock=DockStyle.Fill,BackColor=surface,SizeMode=PictureBoxSizeMode.Zoom,Cursor=Cursors.Hand,AccessibleName="Escolher capa",AllowDrop=true};
+  preview=new PictureBox{Dock=DockStyle.Fill,BackColor=surface,SizeMode=PictureBoxSizeMode.Zoom,Cursor=Cursors.Hand,AccessibleName=UiLanguage.Text("Escolher capa"),AllowDrop=true};
   preview.Click+=(s,e)=>PickCover();
-  imageHint=new Label{Dock=DockStyle.Top,Height=35,TextAlign=ContentAlignment.MiddleLeft,Text="Capa",Cursor=Cursors.Hand};imageHint.Click+=(s,e)=>PickCover();
+  imageHint=new Label{Dock=DockStyle.Top,Height=35,TextAlign=ContentAlignment.MiddleLeft,Text=UiLanguage.Text("Capa"),Cursor=Cursors.Hand};imageHint.Click+=(s,e)=>PickCover();
   var artActions=new FlowLayoutPanel{Dock=DockStyle.Bottom,Height=45,WrapContents=false};
   AddButton(artActions,"Escolher…",PickCover);
   AddButton(artActions,"Remover",()=>{cover="";ShowCover();});
@@ -198,46 +198,46 @@ sealed class CustomGameDialog : Form {
   }
   var fields=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,AutoScroll=true,Padding=new Padding(0,4,0,0)};
   fields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
-  fields.Controls.Add(new Label{Text=game.Source=="Programa"?"Nome do programa":"Nome do jogo",AutoSize=true});
+  fields.Controls.Add(new Label{Text=UiLanguage.Text(game.Source=="Programa"?"Nome do programa":"Nome do jogo"),AutoSize=true});
   name=Input(game.Name,surface);fields.Controls.Add(name,0,1);
   if(!launcherGame){
-  fields.Controls.Add(new Label{Text=oldRom==""?"Caminho do arquivo ou atalho":"Caminho da ROM",AutoSize=true,Margin=new Padding(3,12,3,3)},0,2);
+  fields.Controls.Add(new Label{Text=UiLanguage.Text(oldRom==""?"Caminho do arquivo ou atalho":"Caminho da ROM"),AutoSize=true,Margin=new Padding(3,12,3,3)},0,2);
   path=Input(oldRom==""?game.Target:oldRom,surface);fields.Controls.Add(path,0,3);
   var browse=new FlowLayoutPanel{AutoSize=true,WrapContents=false,Dock=DockStyle.Fill};
   AddButton(browse,"Escolher arquivo…",PickPath);
   if(oldRom!="")AddButton(browse,"Mudar pasta…",PickFolder);
   fields.Controls.Add(browse,0,4);
-  if(oldRom!="")fields.Controls.Add(new Label{Text="A mudança de pasta vale apenas para este jogo.",AutoSize=true,ForeColor=Color.LightGray},0,5);
+  if(oldRom!="")fields.Controls.Add(new Label{Text=UiLanguage.Text("A mudança de pasta vale apenas para este jogo."),AutoSize=true,ForeColor=Color.LightGray},0,5);
   else{
    var extras=new FlowLayoutPanel{AutoSize=true,WrapContents=false,Dock=DockStyle.Fill,Margin=new Padding(0,12,0,0)};
    AddButton(extras,"Ícone de origem…",PickBadge);
    var reset=AddButton(extras,"Usar ícone automático",()=>badge="");
-   reset.AccessibleName="Usar ícone de origem automático";
+   reset.AccessibleName=UiLanguage.Text("Usar ícone de origem automático");
    fields.Controls.Add(extras,0,5);
   }
   if(game.Source=="Port"){
    ClientSize=new Size(770,625);
-   fields.Controls.Add(new Label{Text="Arquivo de dados do jogo (opcional)",AutoSize=true},0,6);
+   fields.Controls.Add(new Label{Text=UiLanguage.Text("Arquivo de dados do jogo (opcional)"),AutoSize=true},0,6);
    portData=Input(game.PortData,surface);fields.Controls.Add(portData,0,7);
    var dataButtons=new FlowLayoutPanel{AutoSize=true,WrapContents=false,Dock=DockStyle.Fill};
-   AddButton(dataButtons,"Escolher dados…",()=>{using(var file=new OpenFileDialog{Title="Escolher arquivo de dados do port",CheckFileExists=true})if(file.ShowDialog(this)==DialogResult.OK)portData.Text=file.FileName;});
+   AddButton(dataButtons,"Escolher dados…",()=>{using(var file=new OpenFileDialog{Title=UiLanguage.Text("Escolher arquivo de dados do port"),CheckFileExists=true})if(file.ShowDialog(this)==DialogResult.OK)portData.Text=file.FileName;});
    AddButton(dataButtons,"Usar jogo embutido",()=>portData.Clear());
    fields.Controls.Add(dataButtons,0,8);
-   fields.Controls.Add(new Label{Text="Argumentos opcionais · {game_path} indica o arquivo de dados",AutoSize=true},0,9);
+   fields.Controls.Add(new Label{Text=UiLanguage.Text("Argumentos opcionais · {game_path} indica o arquivo de dados"),AutoSize=true},0,9);
    portArgs=Input(game.Args,surface);fields.Controls.Add(portArgs,0,10);
   }
   int platformRow=game.Source=="Port"?11:6;
-  fields.Controls.Add(new Label{Text="Plataforma",AutoSize=true,Margin=new Padding(3,11,3,3)},0,platformRow);
+  fields.Controls.Add(new Label{Text=UiLanguage.Text("Plataforma"),AutoSize=true,Margin=new Padding(3,11,3,3)},0,platformRow);
   platform=Input(game.Platform,surface);fields.Controls.Add(platform,0,platformRow+1);
-  fields.Controls.Add(new Label{Text="Link público da imagem no Discord (opcional)",AutoSize=true,Margin=new Padding(3,11,3,3)},0,platformRow+2);
+  fields.Controls.Add(new Label{Text=UiLanguage.Text("Link público da imagem no Discord (opcional)"),AutoSize=true,Margin=new Padding(3,11,3,3)},0,platformRow+2);
   discordCoverUrl=Input(game.DiscordCoverUrl??"",surface);
-  discordCoverUrl.AccessibleName="Link público da imagem no Discord";
+  discordCoverUrl.AccessibleName=UiLanguage.Text("Link público da imagem no Discord");
   fields.Controls.Add(discordCoverUrl,0,platformRow+3);
   }
   var actions=new SoftFlow{Dock=DockStyle.Bottom,Height=47,FlowDirection=FlowDirection.RightToLeft,WrapContents=false};
   var save=AddButton(actions,adding?"Adicionar jogo":"Salvar",ValidateAndClose);((HubButton)save).Accent=accent;((HubButton)save).Primary=true;AcceptButton=save;
   var cancel=AddButton(actions,"Cancelar",()=>DialogResult=DialogResult.Cancel);cancel.DialogResult=DialogResult.Cancel;CancelButton=cancel;
-  var heading=new Label{Text=adding?"Adicionar jogo":game.Name,Font=Skin.HeadingFont(21),Dock=DockStyle.Top,Height=50,AutoEllipsis=true};
+  var heading=new Label{Text=adding?UiLanguage.Text("Adicionar jogo"):game.Name,Font=Skin.HeadingFont(21),Dock=DockStyle.Top,Height=50,AutoEllipsis=true};
   Controls.Add(fields);Controls.Add(art);Controls.Add(actions);Controls.Add(heading);
   ShowCover();
  }
@@ -252,37 +252,37 @@ sealed class CustomGameDialog : Form {
    else next=Storage.Picture(cover);
   }
   var old=preview.Image;preview.Image=next;if(old!=null)old.Dispose();
-  imageHint.Text=next==null?"Capa · clique ou arraste":"Capa";
+  imageHint.Text=UiLanguage.Text(next==null?"Capa · clique ou arraste":"Capa");
  }
  void SetCover(string file){
   var old=cover;cover=file;ShowCover();
-  if(preview.Image==null){cover=old;ShowCover();MessageBox.Show(this,"Não foi possível abrir a imagem. WebP, AVIF e HEIF podem exigir as extensões de imagem do Windows.","Capa");}
+  if(preview.Image==null){cover=old;ShowCover();MessageBox.Show(this,UiLanguage.Text("Não foi possível abrir a imagem. WebP, AVIF e HEIF podem exigir as extensões de imagem do Windows."),UiLanguage.Text("Capa"));}
  }
  void PickCover(){
-  using(var dialog=new OpenFileDialog{Title="Escolher capa",Filter=CoverImages.Filter,CheckFileExists=true})
+  using(var dialog=new OpenFileDialog{Title=UiLanguage.Text("Escolher capa"),Filter=CoverImages.Filter,CheckFileExists=true})
    if(dialog.ShowDialog(this)==DialogResult.OK)SetCover(dialog.FileName);
  }
  void PickBadge(){
-  using(var dialog=new OpenFileDialog{Title="Escolher ícone de origem",Filter="Imagem, atalho ou executável|*.png;*.jpg;*.ico;*.exe;*.lnk;*.url",CheckFileExists=true})
+  using(var dialog=new OpenFileDialog{Title=UiLanguage.Text("Escolher ícone de origem"),Filter="Imagem, atalho ou executável|*.png;*.jpg;*.ico;*.exe;*.lnk;*.url",CheckFileExists=true})
    if(dialog.ShowDialog(this)==DialogResult.OK)badge=dialog.FileName;
  }
  void PickPath(){
   var current="";
   try{if(!String.IsNullOrWhiteSpace(path.Text))current=Path.GetDirectoryName(Path.GetFullPath(path.Text));}catch(ArgumentException){}catch(NotSupportedException){}
-  using(var dialog=new OpenFileDialog{Title=oldRom==""?"Escolher arquivo ou atalho":"Escolher ROM",Filter="Todos os arquivos|*.*",CheckFileExists=true,InitialDirectory=current??""}){
+  using(var dialog=new OpenFileDialog{Title=UiLanguage.Text(oldRom==""?"Escolher arquivo ou atalho":"Escolher ROM"),Filter="Todos os arquivos|*.*",CheckFileExists=true,InitialDirectory=current??""}){
    if(dialog.ShowDialog(this)!=DialogResult.OK)return;
    path.Text=dialog.FileName;if(GameName=="")name.Text=Path.GetFileNameWithoutExtension(dialog.FileName);
   }
  }
  void PickFolder(){
-  var folder=FolderPicker.Show(this,"Escolha a pasta que contém esta ROM",Path.GetDirectoryName(oldRom));
+  var folder=FolderPicker.Show(this,UiLanguage.Text("Escolha a pasta que contém esta ROM"),Path.GetDirectoryName(oldRom));
   if(folder!=null)path.Text=Path.Combine(folder,Path.GetFileName(oldRom));
  }
  void ValidateAndClose(){
   try{
-   if(GameName=="")throw new IOException("Informe um nome.");
+   if(GameName=="")throw new IOException(UiLanguage.Text("Informe um nome."));
    if(launcherGame){DialogResult=DialogResult.OK;return;}
-   if(discordCoverUrl.Text.Trim()!=""&&DiscordCoverUrl==""){discordCoverUrl.Focus();throw new IOException("Cole um link público de imagem que comece com https://.");}
+   if(discordCoverUrl.Text.Trim()!=""&&DiscordCoverUrl==""){discordCoverUrl.Focus();throw new IOException(UiLanguage.Text("Cole um link público de imagem que comece com https://."));}
    ValidPath=RomLibrary.ResolvePath(path.Text,oldRom);
    PortContent=portData==null||String.IsNullOrWhiteSpace(portData.Text)?"":RomLibrary.ResolvePath(portData.Text,"");
    DialogResult=DialogResult.OK;

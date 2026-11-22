@@ -36,7 +36,7 @@ partial class Hub {
   rail.Width=data.SidebarCollapsed?68:218;
   brand.Visible=!data.SidebarCollapsed;controller.Visible=!data.SidebarCollapsed;
   railToggle.Width=data.SidebarCollapsed?44:34;
-  railToggle.AccessibleName=data.SidebarCollapsed?"Expandir navegação":"Recolher navegação";
+  railToggle.AccessibleName=UiLanguage.Text(data.SidebarCollapsed?"Expandir navegação":"Recolher navegação");
   uiTips.SetToolTip(railToggle,railToggle.AccessibleName);
  }
  void ConfigureNav(HubButton button,string key,string label){
@@ -76,11 +76,11 @@ partial class Hub {
    }
    Skin.Symbol(e.Graphics,"search",new Rectangle(10,10,15,15),ForeColor);
   };
-  search.BorderStyle=BorderStyle.None;search.AccessibleName="Buscar na biblioteca";
+  search.BorderStyle=BorderStyle.None;search.AccessibleName=UiLanguage.Text("Buscar na biblioteca");
   search.Location=new Point(31,9);search.Width=153;
-  search.HandleCreated+=(s,e)=>SendCue(search.Handle,0x1501,(IntPtr)1,"Buscar na biblioteca…");
+  search.HandleCreated+=(s,e)=>SendCue(search.Handle,0x1501,(IntPtr)1,UiLanguage.Text("Buscar na biblioteca…"));
   clearSearch=(HubButton)Button("");clearSearch.Glyph="close";clearSearch.AutoSize=false;
-  clearSearch.SetBounds(184,3,29,30);clearSearch.AccessibleName="Limpar pesquisa";clearSearch.Visible=false;
+  clearSearch.SetBounds(184,3,29,30);clearSearch.AccessibleName=UiLanguage.Text("Limpar pesquisa");clearSearch.Visible=false;
   clearSearch.Click+=(s,e)=>{search.Clear();search.Focus();};
   search.GotFocus+=(s,e)=>{searchShell.Invalidate();};
   search.LostFocus+=(s,e)=>{searchShell.Invalidate();};
@@ -157,7 +157,7 @@ partial class Hub {
   }
   var play=CardPlay(art);
   var actionColor=Skin.Mix(surface,accent,.87f);
-  DrawCardPill(graphics,play,installed?"Jogar":InstallCaption(game),actionColor,Skin.OnAccent(actionColor));
+  DrawCardPill(graphics,play,UiLanguage.Text(installed?"Jogar":InstallCaption(game)),actionColor,Skin.OnAccent(actionColor));
   DrawCardPill(graphics,CardFavorite(art),game.Favorite?"★":"☆",Color.FromArgb(218,20,22,32),Color.White);
   DrawCardPill(graphics,CardMore(art),"⋯",Color.FromArgb(218,20,22,32),Color.White);
  }
@@ -178,7 +178,7 @@ partial class Hub {
   MenuGlyph(menu,MenuAction(menu.Items,game.Favorite?"Desfavoritar":"Favoritar",()=>FavoriteGame(game)),"star");
   MenuAction(menu.Items,"Conquistas",()=>ShowAchievements(game));
   MenuAction(menu.Items,game.Completed?"Desmarcar zerado":"Marcar como zerado",()=>ToggleCompleted(game));
-  var collections=new ToolStripMenuItem("Coleções"){ForeColor=ForeColor};
+  var collections=new ToolStripMenuItem(UiLanguage.Text("Coleções")){ForeColor=ForeColor};
   foreach(var shelf in data.Shelves.Where(s=>!s.Smart).OrderBy(s=>s.Name)){
    var option=MenuAction(collections.DropDownItems,shelf.Name,()=>{
     if(!shelf.Ids.Remove(game.Id))shelf.Ids.Add(game.Id);
@@ -202,7 +202,7 @@ partial class Hub {
   return menu;
  }
  ToolStripMenuItem MenuAction(ToolStripItemCollection items,string text,Action action){
-  var item=new ToolStripMenuItem(text){ForeColor=ForeColor,Padding=new Padding(8,5,14,5)};
+  var item=new ToolStripMenuItem(UiLanguage.Text(text)){ForeColor=ForeColor,Padding=new Padding(8,5,14,5)};
   item.Click+=(s,e)=>Safe(action);items.Add(item);return item;
  }
 }

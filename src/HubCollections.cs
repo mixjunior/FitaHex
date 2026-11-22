@@ -25,7 +25,7 @@ partial class Hub {
     var item=shelf;var titles=data.Games.Where(g=>BelongsTo(g,item)).ToArray();
     var tile=new SoftPanel{Width=172,Height=103,BackColor=surface,Margin=new Padding(0,1,9,0)};
     var hit=Action(collectionTiles,item.Name+"  ·  "+titles.Length,()=>Navigate("shelf:"+item.Name));
-    hit.AccessibleName="Abrir coleção "+item.Name+" com "+titles.Length+" jogos";
+    hit.AccessibleName=UiLanguage.Text("Abrir coleção ")+item.Name+" com "+titles.Length+" jogos";
     collectionTiles.Controls.Remove(hit);hit.Dock=DockStyle.Bottom;hit.AutoSize=false;hit.Height=32;
     tile.Controls.Add(hit);
     tile.Paint+=(s,e)=>{
@@ -54,7 +54,7 @@ partial class Hub {
    if(f.ShowDialog(this)!=DialogResult.OK)return;
    string name=f.V("Nome");
    if(name==""||data.Shelves.Any(s=>s!=existing&&s.Name.Equals(name,StringComparison.CurrentCultureIgnoreCase))){
-    MessageBox.Show(this,"Escolha um nome preenchido e diferente das outras coleções.","Coleções");return;
+    MessageBox.Show(this,UiLanguage.Text("Escolha um nome preenchido e diferente das outras coleções."),UiLanguage.Text("Coleções"));return;
    }
    if(existing==null)data.Shelves.Add(new Shelf{Name=name});
    else{
@@ -65,16 +65,16 @@ partial class Hub {
   }
  }
  void DeleteCollection(Shelf shelf){
-  if(MessageBox.Show(this,"Excluir a coleção "+shelf.Name+"?","Coleções",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;
+  if(MessageBox.Show(this,UiLanguage.Text("Excluir a coleção ")+shelf.Name+"?","Coleções",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;
   data.Shelves.Remove(shelf);RemoveCollectionFilter(shelf.Name);
   Save();Navigate("Coleções");BuildNav();RefreshList();
  }
  void ManageCollection(Shelf shelf){
-  using(var dialog=new Form{Text="Jogos de "+shelf.Name,StartPosition=FormStartPosition.CenterParent,ClientSize=new Size(615,510),MinimumSize=new Size(490,420),BackColor=BackColor,ForeColor=ForeColor,Font=Font,Padding=new Padding(14),MinimizeBox=false}){
+  using(var dialog=new Form{Text=UiLanguage.Text("Jogos de ")+shelf.Name,StartPosition=FormStartPosition.CenterParent,ClientSize=new Size(615,510),MinimumSize=new Size(490,420),BackColor=BackColor,ForeColor=ForeColor,Font=Font,Padding=new Padding(14),MinimizeBox=false}){
    var checkedIds=new HashSet<string>(shelf.Ids);
    var items=new CheckedListBox{Dock=DockStyle.Fill,CheckOnClick=true,BackColor=surface,ForeColor=ForeColor,BorderStyle=BorderStyle.None,IntegralHeight=false};
-   var query=new TextBox{Dock=DockStyle.Top,AccessibleName="Buscar jogos para a coleção",BackColor=surface,ForeColor=ForeColor};
-   var cue=new Label{Text="Busque e marque os jogos desta coleção.",Dock=DockStyle.Top,Height=31};
+   var query=new TextBox{Dock=DockStyle.Top,AccessibleName=UiLanguage.Text("Buscar jogos para a coleção"),BackColor=surface,ForeColor=ForeColor};
+   var cue=new Label{Text=UiLanguage.Text("Busque e marque os jogos desta coleção."),Dock=DockStyle.Top,Height=31};
    var saveRow=new FlowLayoutPanel{Dock=DockStyle.Bottom,Height=48,FlowDirection=FlowDirection.RightToLeft};
    var save=Action(saveRow,"Salvar",()=>dialog.DialogResult=DialogResult.OK);save.Active=true;
    var cancel=Action(saveRow,"Cancelar",()=>dialog.DialogResult=DialogResult.Cancel);
@@ -113,14 +113,14 @@ partial class Hub {
   var second=new Shelf{Name="Outra coleção",Ids=new List<string>{game.Id}};
   data.Shelves.Add(collection);data.Shelves.Add(blank);data.Shelves.Add(second);
   try{
-   if(navigation.ContainsKey("shelf:"+collection.Name))throw new InvalidOperationException("Submenu de coleções fechado.");
+   if(navigation.ContainsKey("shelf:"+collection.Name))throw new InvalidOperationException(UiLanguage.Text("Submenu de coleções fechado."));
    Navigate("Coleções");
-   if(!navigation.ContainsKey("shelf:"+collection.Name)||shown!=1||list.Items[0].Tag!=game)throw new InvalidOperationException("Visão das coleções.");
-   if(list.Groups.Count!=3||list.Groups[0].Header!=collection.Name||list.Groups[2].Header!=second.Name||list.Items.Cast<ListViewItem>().Count(item=>item.Tag==game)!=2)throw new InvalidOperationException("Tiras e jogos compartilhados.");
+   if(!navigation.ContainsKey("shelf:"+collection.Name)||shown!=1||list.Items[0].Tag!=game)throw new InvalidOperationException(UiLanguage.Text("Visão das coleções."));
+   if(list.Groups.Count!=3||list.Groups[0].Header!=collection.Name||list.Groups[2].Header!=second.Name||list.Items.Cast<ListViewItem>().Count(item=>item.Tag==game)!=2)throw new InvalidOperationException(UiLanguage.Text("Tiras e jogos compartilhados."));
    Navigate("shelf:"+blank.Name);
-   if(shown!=0||!navigation["shelf:"+blank.Name].Active)throw new InvalidOperationException("Coleção vazia.");
+   if(shown!=0||!navigation["shelf:"+blank.Name].Active)throw new InvalidOperationException(UiLanguage.Text("Coleção vazia."));
    Navigate("shelf:"+collection.Name);
-   if(shown!=1||list.Items[0].Tag!=game)throw new InvalidOperationException("Jogos da coleção.");
+   if(shown!=1||list.Items[0].Tag!=game)throw new InvalidOperationException(UiLanguage.Text("Jogos da coleção."));
   }finally{data.Shelves.Remove(collection);data.Shelves.Remove(blank);data.Shelves.Remove(second);Navigate("Jogos");}
  }
 }

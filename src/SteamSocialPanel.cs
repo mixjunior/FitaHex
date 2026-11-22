@@ -95,7 +95,7 @@ sealed class PlatformPane : UserControl {
  void Run(Action action,string failure){
   try{action();}catch(Exception){Report(failure);}
  }
- void Report(string text){status.Text=text;status.Visible=text!="";}
+ void Report(string text){status.Text=UiLanguage.Text(text);status.Visible=text!="";}
  internal void Go(){
   if(Ready){Navigate(platform.EntryUrl);return;}
   if(!starting)Initialization=Start();
@@ -162,7 +162,7 @@ partial class Hub {
  void OpenRiotSocial(){
   var target=data.Games.Where(g=>g.Source==RiotGames.Source).Select(g=>g.Target).Concat(RiotGames.ClientLocations())
    .FirstOrDefault(path=>!String.IsNullOrWhiteSpace(path)&&File.Exists(path)&&Path.GetFileName(path).Equals("RiotClientServices.exe",StringComparison.OrdinalIgnoreCase));
-  if(target==null)throw new IOException("Riot Client não encontrado.");
+  if(target==null)throw new IOException(UiLanguage.Text("Riot Client não encontrado."));
   using(var process=Process.Start(new ProcessStartInfo(target){WorkingDirectory=Path.GetDirectoryName(target),UseShellExecute=false})){}
  }
  [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
@@ -179,7 +179,7 @@ partial class Hub {
  void ShowSocialOverview(){
   if(socialOverview==null){
    socialOverview=new SoftPanel{Dock=DockStyle.Fill,Padding=new Padding(2,8,2,12),AutoScroll=true};
-   var heading=new Label{Text="Seus perfis",Dock=DockStyle.Top,Height=76,Font=Skin.HeadingFont(28),TextAlign=ContentAlignment.MiddleLeft};
+   var heading=new Label{Text=UiLanguage.Text("Seus perfis"),Dock=DockStyle.Top,Height=76,Font=Skin.HeadingFont(28),TextAlign=ContentAlignment.MiddleLeft};
    var choices=new TableLayoutPanel{Dock=DockStyle.Top};
    var descriptions=new[]{"Perfil da comunidade","Conta Epic Games","Perfil Xbox e gamertag","Conta e Riot ID","Perfil da comunidade","Conta e EA ID","Conta Ubisoft e nome de usuário","Conta e BattleTag"};
    var cards=new List<Control>();
@@ -189,9 +189,9 @@ partial class Hub {
     var iconHost=new SoftPanel{Dock=DockStyle.Top,Height=34};
     var icon=new PictureBox{Dock=DockStyle.Left,Width=34,SizeMode=PictureBoxSizeMode.Zoom,Image=SocialImage(platform.Name)};iconHost.Controls.Add(icon);
     var title=new Label{Text=platform.Name,Dock=DockStyle.Top,Height=37,Font=Skin.HeadingFont(14),TextAlign=ContentAlignment.MiddleLeft,AutoEllipsis=true};
-    var description=new Label{Text=descriptions[index],Dock=DockStyle.Fill,ForeColor=NexusTheme.Find(data.Theme).Muted,AutoEllipsis=true};
+    var description=new Label{Text=UiLanguage.Text(descriptions[index]),Dock=DockStyle.Fill,ForeColor=NexusTheme.Find(data.Theme).Muted,AutoEllipsis=true};
     var button=(HubButton)Button("Abrir perfil  ›");
-    button.AccessibleName="Abrir perfil "+platform.Name;
+    button.AccessibleName=UiLanguage.Text("Abrir perfil ")+platform.Name;
     button.BackColor=surface;button.ForeColor=ForeColor;button.Accent=accent;button.Dock=DockStyle.Bottom;
     button.Click+=(s,e)=>Navigate("social:"+index);
     card.Controls.Add(description);card.Controls.Add(button);card.Controls.Add(title);card.Controls.Add(iconHost);
@@ -221,7 +221,7 @@ partial class Hub {
   int index;
   if(!Int32.TryParse(section.Substring(7),out index)||index<0||index>=socialPlatforms.Length)return;
   try{EmbeddedWebView.Prepare();ShowSocialProfile(index);}
-  catch(Exception error){Log(error.Message);status.Items[0].Text="Não foi possível abrir o perfil desta plataforma.";}
+  catch(Exception error){Log(error.Message);status.Items[0].Text=UiLanguage.Text("Não foi possível abrir o perfil desta plataforma.");}
  }
  [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
  internal static int TestSocialWeb(bool live,int index){

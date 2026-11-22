@@ -34,7 +34,7 @@ partial class Hub {
  }
  void UpdateRecent(){
   var last=data.Games.Where(g=>g.Last.HasValue).OrderByDescending(g=>g.Last.Value).FirstOrDefault();
-  recentGame.Text=last==null?"Último jogo jogado · nenhum por enquanto":"Último jogo jogado  ·  "+last.Name+"  ·  "+last.Last.Value.ToString("g");
+  recentGame.Text=last==null?UiLanguage.Text("Último jogo jogado · nenhum por enquanto"):UiLanguage.Text("Último jogo jogado")+"  ·  "+last.Name+"  ·  "+last.Last.Value.ToString("g");
  }
  internal static bool CanRemove(Game game){return !game.Archived&&(game.ManualInstall||String.IsNullOrEmpty(game.StoreId)||game.Rom!="");}
  void RemoveGame(Game game){
@@ -57,8 +57,8 @@ partial class Hub {
   ApplyDesignTheme();ClearCards();hero.Invalidate(true);list.Invalidate();
  }
  void Settings(){
-  using(var form=new Form{Text="Configurações · "+ProductIdentity.Name,StartPosition=FormStartPosition.CenterParent,ClientSize=new Size(670,445),MinimumSize=new Size(590,420),BackColor=BackColor,ForeColor=ForeColor,Font=Font,Padding=new Padding(18),MaximizeBox=false,MinimizeBox=false}){
-   var heading=new Label{Text="Configurações",Dock=DockStyle.Top,Height=54,Font=Skin.HeadingFont(24)};
+  using(var form=new Form{Text=UiLanguage.Text("Configurações · ")+ProductIdentity.Name,StartPosition=FormStartPosition.CenterParent,ClientSize=new Size(670,445),MinimumSize=new Size(590,420),BackColor=BackColor,ForeColor=ForeColor,Font=Font,Padding=new Padding(18),MaximizeBox=false,MinimizeBox=false}){
+   var heading=new Label{Text=UiLanguage.Text("Configurações"),Dock=DockStyle.Top,Height=54,Font=Skin.HeadingFont(24)};
    var panes=new SoftPanel{Dock=DockStyle.Fill};
    var tabs=new SoftFlow{Dock=DockStyle.Left,Width=152,FlowDirection=FlowDirection.TopDown,WrapContents=false,BackColor=rail.BackColor,Padding=new Padding(6)};
    var pages=new[]{SettingsPage("Aparência"),SettingsPage("Biblioteca"),SettingsPage("Integrações"),SettingsPage("Controle"),SettingsPage("Backup"),SettingsPage("Windows")};
@@ -74,26 +74,31 @@ partial class Hub {
    }
    buttons[0].Active=true;
    var titles=new[]{"Janela","Janela sem borda","Tela cheia"};
-   var modes=new ComboBox{Width=290,DropDownStyle=ComboBoxStyle.DropDownList,AccessibleName="Modo da janela"};
-   modes.Items.AddRange(titles);modes.SelectedIndex=Math.Max(0,Math.Min(2,displayMode));
-   var themes=new ComboBox{Width=290,DropDownStyle=ComboBoxStyle.DropDownList,AccessibleName="Tema"};
-   themes.Items.AddRange(NexusTheme.All.Select(t=>t.Label).Cast<object>().ToArray());
+   var modes=new ComboBox{Width=290,DropDownStyle=ComboBoxStyle.DropDownList,AccessibleName=UiLanguage.Text("Modo da janela")};
+   modes.Items.AddRange(titles.Select(UiLanguage.Text).Cast<object>().ToArray());modes.SelectedIndex=Math.Max(0,Math.Min(2,displayMode));
+   var themes=new ComboBox{Width=290,DropDownStyle=ComboBoxStyle.DropDownList,AccessibleName=UiLanguage.Text("Tema")};
+   themes.Items.AddRange(NexusTheme.All.Select(t=>UiLanguage.Text(t.Label)).Cast<object>().ToArray());
    themes.SelectedIndex=Array.IndexOf(NexusTheme.All,NexusTheme.Find(data.Theme));
-   var preview=new Label{Width=290,Height=46,Padding=new Padding(12,0,0,0),TextAlign=ContentAlignment.MiddleLeft,Text="Prévia do tema"};
+   var preview=new Label{Width=290,Height=46,Padding=new Padding(12,0,0,0),TextAlign=ContentAlignment.MiddleLeft,Text=UiLanguage.Text("Prévia do tema")};
    Action swatch=()=>{var picked=NexusTheme.All[themes.SelectedIndex];preview.BackColor=picked.Surface;preview.ForeColor=picked.Text;};
    themes.SelectedIndexChanged+=(s,e)=>swatch();swatch();
-   pages[0].Controls.Add(new Label{Text="Modo da janela",AutoSize=true});pages[0].Controls.Add(modes);
-   pages[0].Controls.Add(new Label{Text="Tema",AutoSize=true,Margin=new Padding(3,12,3,3)});pages[0].Controls.Add(themes);pages[0].Controls.Add(preview);
-   var minimize=new CheckBox{AutoSize=true,Text="Minimizar o "+ProductIdentity.Name+" ao abrir um jogo",Checked=data.Minimize};
-   var detect=new CheckBox{AutoSize=true,Text="Atualizar jogos dos launchers ao iniciar",Checked=data.AutoScan};
+   pages[0].Controls.Add(new Label{Text=UiLanguage.Text("Modo da janela"),AutoSize=true});pages[0].Controls.Add(modes);
+   pages[0].Controls.Add(new Label{Text=UiLanguage.Text("Tema"),AutoSize=true,Margin=new Padding(3,12,3,3)});pages[0].Controls.Add(themes);pages[0].Controls.Add(preview);
+   var languages=new ComboBox{Width=290,DropDownStyle=ComboBoxStyle.DropDownList,AccessibleName=UiLanguage.Text("Idioma")};
+   languages.Items.AddRange(new[]{UiLanguage.Text("Idioma do Windows"),"Português (Brasil)","English"});
+   languages.SelectedIndex=data.Language=="pt-BR"?1:data.Language=="en"?2:0;
+   pages[0].Controls.Add(new Label{Text=UiLanguage.Text("Idioma"),AutoSize=true,Margin=new Padding(3,12,3,3)});
+   pages[0].Controls.Add(languages);
+   var minimize=new CheckBox{AutoSize=true,Text=UiLanguage.Text("Minimizar o FitaHex ao abrir um jogo"),Checked=data.Minimize};
+   var detect=new CheckBox{AutoSize=true,Text=UiLanguage.Text("Atualizar jogos dos launchers ao iniciar"),Checked=data.AutoScan};
    pages[1].Controls.Add(minimize);pages[1].Controls.Add(detect);
    Action(pages[1],"Ver mini tour",()=>ShowTour(false,form));
-   pages[2].Controls.Add(new Label{Text="Consulte as páginas de conta dos launchers em Social.",MaximumSize=new Size(365,0),AutoSize=true});
+   pages[2].Controls.Add(new Label{Text=UiLanguage.Text("Consulte as páginas de conta dos launchers em Social."),MaximumSize=new Size(365,0),AutoSize=true});
    Action(pages[2],"Abrir Social",()=>{form.DialogResult=DialogResult.Cancel;Navigate("Social");});
-   var discordEnabled=new CheckBox{AutoSize=true,Text="Mostrar ROMs e jogos avulsos no Discord",Checked=data.DiscordEnabled,Margin=new Padding(3,15,3,5)};
+   var discordEnabled=new CheckBox{AutoSize=true,Text=UiLanguage.Text("Mostrar ROMs e jogos avulsos no Discord"),Checked=data.DiscordEnabled,Margin=new Padding(3,15,3,5)};
    pages[2].Controls.Add(discordEnabled);
-   pages[2].Controls.Add(new Label{Text="Abra o Discord para desktop, permita o compartilhamento de atividade no Discord e inicie o jogo pelo FitaHex.",AutoSize=true,MaximumSize=new Size(350,0)});
-   pages[3].Controls.Add(new Label{Text="Direcional · navegar\nA · selecionar ou jogar\nB · voltar\nLB / RB · trocar de seção\nY · buscar\nX · alternar favorito",AutoSize=true});
+   pages[2].Controls.Add(new Label{Text=UiLanguage.Text("Abra o Discord para desktop, permita o compartilhamento de atividade no Discord e inicie o jogo pelo FitaHex."),AutoSize=true,MaximumSize=new Size(350,0)});
+   pages[3].Controls.Add(new Label{Text=UiLanguage.Text("Direcional · navegar\nA · selecionar ou jogar\nB · voltar\nLB / RB · trocar de seção\nY · buscar\nX · alternar favorito"),AutoSize=true});
    Action(pages[4],"Abrir pasta de dados",()=>System.Diagnostics.Process.Start("explorer.exe","\""+Storage.Root+"\""));
    pages[4].Controls.Add(new Label{Text=Storage.Root,AutoSize=true,MaximumSize=new Size(370,0),
     ForeColor=NexusTheme.Find(data.Theme).Muted,Margin=new Padding(3,5,3,10)});
@@ -111,22 +116,27 @@ partial class Hub {
    data.Theme=NexusTheme.All[themes.SelectedIndex].Key;data.Minimize=minimize.Checked;data.AutoScan=detect.Checked;
    data.WindowMode=modes.SelectedIndex;data.Fullscreen=modes.SelectedIndex==2;
    data.DiscordEnabled=discordEnabled.Checked;UpdateDiscordPresence();
-   Save();ApplyTheme();BuildNav();SetMode(modes.SelectedIndex,false);RefreshList();
+   data.Language=new[]{"","pt-BR","en"}[languages.SelectedIndex];
+   Save();
+   if(UiLanguage.UseEnglish(data.Language,System.Globalization.CultureInfo.CurrentUICulture)!=UiLanguage.English){
+    ReloadLanguage=true;ExitFromTray();return;
+   }
+   ApplyTheme();BuildNav();SetMode(modes.SelectedIndex,false);RefreshList();
   }
  }
  SoftFlow SettingsPage(string title){
   var page=new SoftFlow{Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true,Padding=new Padding(19,7,8,0),Tag=title};
-  page.Controls.Add(new Label{Text=title,AutoSize=true,Font=Skin.HeadingFont(17),Margin=new Padding(3,2,3,13)});
+  page.Controls.Add(new Label{Text=UiLanguage.Text(title),AutoSize=true,Font=Skin.HeadingFont(17),Margin=new Padding(3,2,3,13)});
   return page;
  }
  void ExportLibrary(){
   using(var file=new SaveFileDialog{Filter="Backup "+ProductIdentity.Name+"|*.zip",FileName=ProductIdentity.Name+"-backup.zip"})
-   if(file.ShowDialog(this)==DialogResult.OK){Save();Storage.Export(file.FileName);MessageBox.Show(this,"Backup exportado.","Backup",MessageBoxButtons.OK,MessageBoxIcon.Information);}
+   if(file.ShowDialog(this)==DialogResult.OK){Save();Storage.Export(file.FileName);MessageBox.Show(this,UiLanguage.Text("Backup exportado."),UiLanguage.Text("Backup"),MessageBoxButtons.OK,MessageBoxIcon.Information);}
  }
  bool RestoreLibrary(){
-  if(running.Count>0||scanning||xboxScanning||loadingArt||checkingInstallations)throw new IOException("Aguarde os jogos e as atualizações da biblioteca antes de restaurar o backup.");
+  if(running.Count>0||scanning||xboxScanning||loadingArt||checkingInstallations)throw new IOException(UiLanguage.Text("Aguarde os jogos e as atualizações da biblioteca antes de restaurar o backup."));
   using(var file=new OpenFileDialog{Filter="Backup "+ProductIdentity.Name+"|*.zip"}){
-   if(file.ShowDialog(this)!=DialogResult.OK||MessageBox.Show(this,"Substituir a biblioteca atual pelo backup?","Restaurar",MessageBoxButtons.YesNo)!=DialogResult.Yes)return false;
+   if(file.ShowDialog(this)!=DialogResult.OK||MessageBox.Show(this,UiLanguage.Text("Substituir a biblioteca atual pelo backup?"),UiLanguage.Text("Restaurar"),MessageBoxButtons.YesNo)!=DialogResult.Yes)return false;
    var restored=Storage.Import(file.FileName);restored.RestoreArchivedGames();restored.MigrateCategories();Storage.Write(restored);
    data=restored;UpdateDiscordPresence();collectionFilter="";sourceFilter="";chosenStates.Clear();UpdateFilterLabel();
    Navigate("Jogos");selected=null;ApplyRail();ApplyGridSize();ApplyTheme();BuildNav();SetMode(data.WindowMode??(data.Fullscreen?2:0),false);RefreshList();

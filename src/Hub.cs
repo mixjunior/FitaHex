@@ -13,7 +13,7 @@ public class Editor : Form {
  TableLayoutPanel fields=new TableLayoutPanel{Dock=DockStyle.Top,AutoSize=true,ColumnCount=3,Padding=new Padding(14)};
  Dictionary<string,TextBox> inputs=new Dictionary<string,TextBox>();
  public Editor(string title){
-  Text=title; Size=new Size(690,630); MinimumSize=new Size(480,380); StartPosition=FormStartPosition.CenterParent;
+  Text=UiLanguage.Text(title); Size=new Size(690,630); MinimumSize=new Size(480,380); StartPosition=FormStartPosition.CenterParent;
   BackColor=Color.FromArgb(25,23,34);ForeColor=Color.White;Font=new Font("Segoe UI",10);
   fields.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,165));fields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));fields.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,48));
   var area=new Panel{Dock=DockStyle.Fill,AutoScroll=true};area.Controls.Add(fields);Controls.Add(area);
@@ -22,7 +22,7 @@ public class Editor : Form {
  }
  public void Add(string label,string value,string picker=""){
   var row=fields.RowCount++;var box=new TextBox{Text=value,Dock=DockStyle.Fill,BackColor=Color.FromArgb(43,39,56),ForeColor=Color.White,BorderStyle=BorderStyle.FixedSingle,Margin=new Padding(4,5,4,7)};
-  if(label.StartsWith("Variáveis")){box.Multiline=true;box.Height=55;}inputs[label]=box;fields.Controls.Add(new Label{Text=label,AutoSize=true,Anchor=AnchorStyles.Left},0,row);fields.Controls.Add(box,1,row);
+  if(label.StartsWith("Variáveis")){box.Multiline=true;box.Height=55;}inputs[label]=box;fields.Controls.Add(new Label{Text=UiLanguage.Text(label),AutoSize=true,Anchor=AnchorStyles.Left},0,row);fields.Controls.Add(box,1,row);
   if(picker==""){fields.SetColumnSpan(box,2);return;}
   var browse=Hub.Button("…");browse.Width=40;browse.Height=27;fields.Controls.Add(browse,2,row);
   browse.Click+=(s,e)=>{if(picker=="dir"){using(var d=new FolderBrowserDialog())if(d.ShowDialog(this)==DialogResult.OK)box.Text=d.SelectedPath;}else using(var d=new OpenFileDialog{Filter=picker=="img"?CoverImages.Filter:"Todos os arquivos|*.*"})if(d.ShowDialog(this)==DialogResult.OK)box.Text=d.FileName;};
@@ -31,6 +31,7 @@ public class Editor : Form {
 }
 public partial class Hub : Form {
  Library data;
+ internal bool ReloadLanguage {get;private set;}
  FlowLayoutPanel nav=new SoftFlow(), toolbar=new SoftFlow(), detailButtons=new SoftFlow();
  ListView list=new Gallery();
  ImageList covers=new ImageList();
@@ -59,11 +60,11 @@ public partial class Hub : Form {
  int shown, page=150;
  bool fullscreen, scanning, refreshing, loadingArt, refreshArtRequested;
  UpdateReport latestUpdate;
- readonly ToolStripStatusLabel updateLink=new ToolStripStatusLabel("Ver resumo"){IsLink=true,Visible=false};
+ readonly ToolStripStatusLabel updateLink=new ToolStripStatusLabel(UiLanguage.Text("Ver resumo")){IsLink=true,Visible=false};
  Color accent, surface;
  readonly HashSet<string> running=new HashSet<string>();
  public static Button Button(string label){
-  var b=new HubButton{Text=label,AutoSize=true,Height=34,FlatStyle=FlatStyle.Flat,BackColor=Color.FromArgb(31,32,47),ForeColor=Color.FromArgb(237,235,249),Margin=new Padding(3),Padding=new Padding(5,0,5,0),Cursor=Cursors.Hand};
+  var b=new HubButton{Text=UiLanguage.Text(label.TrimEnd())+(label.Length>label.TrimEnd().Length?label.Substring(label.TrimEnd().Length):""),AutoSize=true,Height=34,FlatStyle=FlatStyle.Flat,BackColor=Color.FromArgb(31,32,47),ForeColor=Color.FromArgb(237,235,249),Margin=new Padding(3),Padding=new Padding(5,0,5,0),Cursor=Cursors.Hand};
   b.FlatAppearance.BorderSize=0;return b;
  }
  HubButton Action(FlowLayoutPanel panel,string label,Action click){var b=(HubButton)Button(label);if(!accent.IsEmpty){b.Accent=accent;b.BackColor=surface;b.ForeColor=ForeColor;}if(panel==detailButtons)b.PaintBackdrop=PaintHeroButtonBackdrop;b.Click+=(s,e)=>Safe(click);panel.Controls.Add(b);return b;}
@@ -73,13 +74,13 @@ public partial class Hub : Form {
  public Hub(Library library,bool enableTray=false,bool offerTour=false){
   Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);
   if(enableTray)SetupTray();
-  data=library;Text=ProductIdentity.Name+" — Biblioteca de jogos";MinimumSize=new Size(840,580);Size=new Size(1240,780);StartPosition=FormStartPosition.CenterScreen;KeyPreview=true;Font=Skin.UiFont(10);ForeColor=Color.White;
+  data=library;Text=ProductIdentity.Name+UiLanguage.Text(" — Biblioteca de jogos");MinimumSize=new Size(840,580);Size=new Size(1240,780);StartPosition=FormStartPosition.CenterScreen;KeyPreview=true;Font=Skin.UiFont(10);ForeColor=Color.White;
   SetupRail();
   body.Dock=DockStyle.Fill;body.Padding=new Padding(24,8,24,12);
   toolbar.Dock=DockStyle.Top;toolbar.Height=55;toolbar.Padding=new Padding(0,7,0,4);
   SetupSearch();
   sort.DropDownStyle=ComboBoxStyle.DropDownList;
-  sort.Items.AddRange(new[]{"A–Z","Adicionados recentemente","Mais jogados","Últimos jogados","Ordem manual","Z–A"});
+  sort.Items.AddRange(new[]{"A–Z","Adicionados recentemente","Mais jogados","Últimos jogados","Ordem manual","Z–A"}.Select(UiLanguage.Text).Cast<object>().ToArray());
   sort.SelectedIndex=0;sort.SelectedIndexChanged+=(s,e)=>RefreshList();
   AddSelector(sort,"Ordenar");SetupFilters();
   HubButton view=null;
@@ -99,7 +100,7 @@ public partial class Hub : Form {
   heroText.Controls.Add(details);heroText.Controls.Add(detailButtons);heroText.Controls.Add(subtitle);heroText.Controls.Add(title);hero.Controls.Add(heroText);
   list.Dock=DockStyle.Fill;list.BorderStyle=BorderStyle.None;list.ForeColor=Color.White;list.MultiSelect=false;list.FullRowSelect=true;list.HideSelection=false;list.ShowItemToolTips=true;list.AllowDrop=true;list.OwnerDraw=true;list.DrawItem+=DrawGame;list.DrawColumnHeader+=(s,e)=>{using(var brush=new SolidBrush(surface))e.Graphics.FillRectangle(brush,e.Bounds);TextRenderer.DrawText(e.Graphics,e.Header.Text,Font,e.Bounds,ForeColor,TextFormatFlags.VerticalCenter|TextFormatFlags.Left);};list.DrawSubItem+=(s,e)=>{if(list.View==View.Details){var fill=e.Item.Selected?Skin.Mix(surface,accent,.25f):BackColor;using(var brush=new SolidBrush(fill))e.Graphics.FillRectangle(brush,e.Bounds);var bounds=e.Bounds;var game=e.Item.Tag as Game;if(e.ColumnIndex==2&&game!=null){DrawOrigin(e.Graphics,Origin(game),new Rectangle(bounds.X+2,bounds.Y+1,16,16),game);bounds.X+=22;bounds.Width-=22;}if(bounds.Width>0)TextRenderer.DrawText(e.Graphics,e.SubItem.Text,Font,bounds,ForeColor,TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);}};
   covers.ImageSize=new Size(126,178);covers.ColorDepth=ColorDepth.Depth32Bit;list.LargeImageList=covers;var imageHandle=covers.Handle;using(var sizing=Placeholder())covers.Images.Add(sizing);
-  foreach(var c in new[]{"Jogo","Plataforma","Origem","Tempo","Instalação"})list.Columns.Add(c,c=="Jogo"?300:125);
+  foreach(var c in new[]{"Jogo","Plataforma","Origem","Tempo","Instalação"})list.Columns.Add(UiLanguage.Text(c),c=="Jogo"?300:125);
   list.HandleCreated+=(s,e)=>((Gallery)list).IconSpacing(covers.ImageSize);
   ApplyGridSize();SetupCardHover();
   list.SelectedIndexChanged+=(s,e)=>{if(!refreshing)SetGame(list.SelectedItems.Count==0?null:list.SelectedItems[0].Tag as Game);};
@@ -133,11 +134,11 @@ public partial class Hub : Form {
     var key=keys[i];HubButton button;
     if(!navigation.TryGetValue(key,out button)){
      var label=key=="Jogos"?"Biblioteca":key.StartsWith("shelf:")?key.Substring(6):key.StartsWith("social:")?socialPlatforms[Int32.Parse(key.Substring(7))].Name:key;
-     button=Nav(label,key);navigation.Add(key,button);
+     button=Nav(label,key);if(key.StartsWith("shelf:"))button.Text=label;navigation.Add(key,button);
     }
     ConfigureNav(button,key,key=="Jogos"?"Biblioteca":button.Text);
     button.BackColor=rail.BackColor;button.Accent=accent;button.ForeColor=ForeColor;
-    if(key=="Coleções")button.Text=InCollections?"Coleções  ▾":"Coleções  ›";
+    if(key=="Coleções")button.Text=UiLanguage.Text(InCollections?"Coleções  ▾":"Coleções  ›");
     if(key=="Social")button.Text=InSocial?"Social  ▾":"Social  ›";
     if(key.StartsWith("shelf:"))button.AllowDrop=!data.Shelves.First(c=>"shelf:"+c.Name==key).Smart;
     if(nav.Controls.GetChildIndex(button)!=i)nav.Controls.SetChildIndex(button,i);
@@ -222,8 +223,8 @@ public partial class Hub : Form {
    var gallery=(Gallery)list;gallery.ResetGroupHeaders();gallery.GroupTotals.Clear();
    list.Items.Clear();list.Groups.Clear();
    var groups=new ListViewGroup[GroupTitles.Length];
-   if(grouped)for(int index=0;index<groups.Length;index++){groups[index]=new ListViewGroup(GroupTitles[index]);list.Groups.Add(groups[index]);}
-   if(grouped)foreach(var batch in games.GroupBy(g=>LibraryGroup(g,recent,installed.Contains(g.Id))))gallery.GroupTotals[GroupTitles[batch.Key]]=batch.Count();
+   if(grouped)for(int index=0;index<groups.Length;index++){groups[index]=new ListViewGroup(UiLanguage.Text(GroupTitles[index]));list.Groups.Add(groups[index]);}
+   if(grouped)foreach(var batch in games.GroupBy(g=>LibraryGroup(g,recent,installed.Contains(g.Id))))gallery.GroupTotals[UiLanguage.Text(GroupTitles[batch.Key])]=batch.Count();
    if(thumbnails.Count>420)ClearCards();
    if(cardImages.Count==0)cardImages.Add(Placeholder());
    list.View=LibraryView==1&&!fullscreen?View.Details:View.LargeIcon;
@@ -248,17 +249,17 @@ public partial class Hub : Form {
     }
    }
    if(totalCards>page){
-    var more=new ListViewItem("Carregar mais…",0){Group=moreGroup};
+    var more=new ListViewItem(UiLanguage.Text("Carregar mais…"),0){Group=moreGroup};
     list.Items.Add(more);
    }
   }finally{list.EndUpdate();body.ResumeLayout();refreshing=false;}
   ((Gallery)list).IconSpacing(covers.ImageSize);((Gallery)list).RestoreCollapsed();
   bool hasRows=list.Items.Count!=0;empty.Visible=!hasRows;list.Visible=hasRows;
-  emptyText.Text=search.Text!=""?"Nenhum jogo corresponde à busca.":section=="Favoritos"?"Favorite um jogo para encontrá-lo aqui.":section=="Zerados"?"Use Marcar como zerado nos detalhes do jogo.":section=="Histórico"?"Jogos removidos ou desinstalados aparecem aqui com o progresso salvo.":section=="Coleções"?"Crie uma coleção ou abra uma pelo submenu para adicionar jogos.":shelves!=null?"Nenhum jogo para mostrar nesta coleção.":"Nenhum jogo nesta seção.";
+  emptyText.Text=UiLanguage.Text(search.Text!=""?"Nenhum jogo corresponde à busca.":section=="Favoritos"?"Favorite um jogo para encontrá-lo aqui.":section=="Zerados"?"Use Marcar como zerado nos detalhes do jogo.":section=="Histórico"?"Jogos removidos ou desinstalados aparecem aqui com o progresso salvo.":section=="Coleções"?"Crie uma coleção ou abra uma pelo submenu para adicionar jogos.":shelves!=null?"Nenhum jogo para mostrar nesta coleção.":"Nenhum jogo nesta seção.");
   UpdateRecent();UpdateNavCounts();
-  libraryHeading.Text=section=="Coleções"?"Jogos das coleções   ·   "+shown:SectionTitle()+"   ·   "+shown;
+  libraryHeading.Text=section=="Coleções"?UiLanguage.Text("Jogos das coleções")+"   ·   "+shown:SectionTitle()+"   ·   "+shown;
   UpdateCollectionShowcase(collectionGroups);SetGame(nextSelection);
-  message.Text=shown+" exibidos  •  "+data.Games.Count+" na biblioteca  •  "+Duration(data.Games.Sum(x=>x.PlayedSeconds));
+  message.Text=shown+UiLanguage.Text(" exibidos")+"  •  "+data.Games.Count+UiLanguage.Text(" na biblioteca")+"  •  "+Duration(data.Games.Sum(x=>x.PlayedSeconds));
  }
  void AddGameCard(Game game,ListViewGroup group,HashSet<string> installed,Game nextSelection){
   var icon=0;
@@ -266,7 +267,7 @@ public partial class Hub : Form {
    if(game.Cover!="")icon=Thumbnail(game.Cover);
    else if(game.Icon!="")icon=Thumbnail(game.Icon,true);
   }
-  var item=new ListViewItem(new[]{(game.Favorite?"★  ":"")+game.Name+(game.Completed?"  ✓":""),game.Platform,Origin(game),Duration(game.PlayedSeconds),installed.Contains(game.Id)?"Instalado":InUninstalledHistory(game)?"Desinstalado":"Não instalado"},0){
+  var item=new ListViewItem(new[]{(game.Favorite?"★  ":"")+game.Name+(game.Completed?"  ✓":""),game.Platform,UiLanguage.Text(Origin(game)),Duration(game.PlayedSeconds),UiLanguage.Text(installed.Contains(game.Id)?"Instalado":InUninstalledHistory(game)?"Desinstalado":"Não instalado")},0){
    Group=group,Tag=game,Name=icon.ToString(),ToolTipText=game.Name+"  ·  "+game.Source
   };
   list.Items.Add(item);
@@ -281,9 +282,9 @@ public partial class Hub : Form {
   detailButtons.SuspendLayout();try{
   Clear(detailButtons);
   if(section=="Coleções"){
-   title.Text=section;subtitle.Text=data.Shelves.Count+(data.Shelves.Count==1?" coleção":" coleções");
+   title.Text=UiLanguage.Text(section);subtitle.Text=data.Shelves.Count+(UiLanguage.English?(data.Shelves.Count==1?" collection":" collections"):(data.Shelves.Count==1?" coleção":" coleções"));
    Action(detailButtons,"＋ Nova coleção",()=>Collection(null));
-  }else{title.Text=game==null?(SectionTitle()):game.Name;subtitle.Text=game==null?"Biblioteca local  /  "+data.Profile:game.Platform+"   /   "+game.Source+"   /   "+Duration(game.PlayedSeconds);}
+  }else{title.Text=game==null?(SectionTitle()):game.Name;subtitle.Text=game==null?UiLanguage.Text("Biblioteca local")+"  /  "+data.Profile:game.Platform+"   /   "+UiLanguage.Text(game.Source)+"   /   "+Duration(game.PlayedSeconds);}
   if(ActiveSource==RiotGames.Source)Action(detailButtons,"Atualizar jogos Riot",()=>Scan(true));
   if(ActiveSource==XboxGames.Source){Action(detailButtons,"Atualizar jogos Xbox",()=>ScanXbox(true));Action(detailButtons,"Escolher jogo instalado…",()=>PickXbox());}
   if(ActiveSource=="Epic Games")Action(detailButtons,"＋ Adicionar por caminho",AddEpic);
@@ -293,13 +294,13 @@ public partial class Hub : Form {
    if(!shelf.Smart)Action(detailButtons,"Gerenciar jogos…",()=>ManageCollection(shelf));
    Action(detailButtons,"Excluir coleção",()=>DeleteCollection(shelf));
   }
-  if(game==null){details.Text=section=="Coleções"?"Abra uma coleção no submenu à esquerda.":shelf!=null?"Os jogos desta coleção aparecem aqui.":ActiveSource==RiotGames.Source?ProductIdentity.Name+" procura instalações locais e abre os jogos pelo Riot Client.":ActiveSource==XboxGames.Source?"Importe jogos instalados ou escolha um título pelo menu Iniciar do Windows.":ActiveSource=="Epic Games"?"Use Atualizar jogos ou escolha a pasta, o executável ou o atalho do jogo.":"Adicione um executável ou importe os jogos das lojas instaladas neste computador.";return;}
-  details.Text=String.Join("   •   ",new[]{game.Description,game.Tags,!game.Last.HasValue?"":"Última execução "+game.Last.Value.ToString("g")}.Where(x=>x!=""));
+  if(game==null){details.Text=UiLanguage.Text(section=="Coleções"?"Abra uma coleção no submenu à esquerda.":shelf!=null?"Os jogos desta coleção aparecem aqui.":ActiveSource==RiotGames.Source?ProductIdentity.Name+" procura instalações locais e abre os jogos pelo Riot Client.":ActiveSource==XboxGames.Source?"Importe jogos instalados ou escolha um título pelo menu Iniciar do Windows.":ActiveSource=="Epic Games"?"Use Atualizar jogos ou escolha a pasta, o executável ou o atalho do jogo.":"Adicione um executável ou importe os jogos das lojas instaladas neste computador.");return;}
+  details.Text=String.Join("   •   ",new[]{game.Description,game.Tags,!game.Last.HasValue?"":UiLanguage.Text("Última execução ")+game.Last.Value.ToString("g")}.Where(x=>x!=""));
 
-  if(game.Completed)subtitle.Text+="   ·   Zerado";
+  if(game.Completed)subtitle.Text+="   ·   "+UiLanguage.Text("Zerado");
   var ready=HasPlayableEdition(game);
   playButton=ready?Action(detailButtons,"▶  Jogar",()=>ChoosePlay(game)):Action(detailButtons,DownloadAction(game),()=>OpenInstallation(game));playButton.Primary=true;
-  if(!Installed(game))subtitle.Text+=InUninstalledHistory(game)?"   /   Desinstalado":"   /   Não instalado nesta plataforma";
+  if(!Installed(game))subtitle.Text+="   /   "+UiLanguage.Text(InUninstalledHistory(game)?"Desinstalado":"Não instalado nesta plataforma");
   Action(detailButtons,"Editar",()=>{if(IsCustom(game))EditCustom(game);else Edit(game);});Action(detailButtons,game.Favorite?"★ Favorito":"☆ Favoritar",()=>{game.Favorite=!game.Favorite;Save();RefreshList();});Action(detailButtons,"Abrir pasta",()=>OpenFolder(game));
   Action(detailButtons,"Conquistas",()=>ShowAchievements(game));
   Action(detailButtons,game.Completed?"Desmarcar zerado":"Marcar como zerado",()=>ToggleCompleted(game));
@@ -308,7 +309,7 @@ public partial class Hub : Form {
  }
  void OpenFolder(Game g){
   var folder=g.Rom!=""?Path.GetDirectoryName(g.Rom):g.Install!=""?g.Install:g.Folder!=""?g.Folder:File.Exists(g.Target)?Path.GetDirectoryName(g.Target):"";
-  if(!Directory.Exists(folder))throw new IOException("Pasta indisponível.");Process.Start("explorer.exe","\""+folder+"\"");
+  if(!Directory.Exists(folder))throw new IOException(UiLanguage.Text("Pasta indisponível."));Process.Start("explorer.exe","\""+folder+"\"");
  }
  void Edit(Game game){
   using(var form=new CustomGameDialog(game,false,BackColor,surface,accent,true)){
@@ -320,7 +321,7 @@ public partial class Hub : Form {
  static bool Yes(string text){return text.Equals("sim",StringComparison.OrdinalIgnoreCase);}
  async void Scan(bool showReport=false){
   if(scanning||xboxScanning)return;
-  scanning=true;message.Text="Atualizando jogos dos launchers…";
+  scanning=true;message.Text=UiLanguage.Text("Atualizando jogos dos launchers…");
   var report=new UpdateReport(Launchers);
   try{
    var knownIds=data.Games.Select(g=>g.StoreId).ToArray();
@@ -352,7 +353,7 @@ public partial class Hub : Form {
    await LoadArtCore(false,report);
    if(IsDisposed)return;
    latestUpdate=report;updateLink.Visible=true;
-   message.Text="Atualização concluída  •  "+report.TotalGames+" jogos encontrados  •  "+report.TotalCovers+" capas atualizadas";
+   message.Text=UiLanguage.Text("Atualização concluída")+"  •  "+report.TotalGames+UiLanguage.Text(" jogos encontrados")+"  •  "+report.TotalCovers+UiLanguage.Text(" capas atualizadas");
    if(showReport&&Visible&&WindowState!=FormWindowState.Minimized)ShowUpdateReport();
   }catch(Exception error){if(!IsDisposed)Safe(()=>{throw new IOException(error.Message,error);});}
   finally{scanning=false;}
@@ -365,12 +366,12 @@ public partial class Hub : Form {
    f.Add("Capa (opcional)","","img");
    if(f.ShowDialog(this)!=DialogResult.OK)return;
    var install=f.V("Pasta de instalação");var file=f.V("Executável ou atalho");
-   if(install==""&&file=="")throw new IOException("Selecione a pasta do jogo ou um executável/atalho.");
-   if(install!=""&&!Directory.Exists(install))throw new IOException("Pasta de instalação inválida.");
+   if(install==""&&file=="")throw new IOException(UiLanguage.Text("Selecione a pasta do jogo ou um executável/atalho."));
+   if(install!=""&&!Directory.Exists(install))throw new IOException(UiLanguage.Text("Pasta de instalação inválida."));
    var installSelected=install!="";
    if(file!=""){
     var ext=Path.GetExtension(file).ToLowerInvariant();
-    if(!File.Exists(file)||(ext!=".exe"&&ext!=".lnk"&&ext!=".url"))throw new IOException("Selecione um arquivo .exe, .lnk ou .url existente.");
+    if(!File.Exists(file)||(ext!=".exe"&&ext!=".lnk"&&ext!=".url"))throw new IOException(UiLanguage.Text("Selecione um arquivo .exe, .lnk ou .url existente."));
     if(install==""&&ext==".exe")install=Path.GetDirectoryName(file);
    }
    var name=f.V("Nome (opcional)");
@@ -401,8 +402,8 @@ public partial class Hub : Form {
    (g.Source=="Epic Games"||Artwork.StoreCoverSupported(g))&&(g.Cover==""||g.RefreshCover)||CustomArtwork.Supports(g)&&(g.RefreshCover||visible.Contains(g.Id)&&(g.Cover==""||g.Rom==""&&g.Icon==""))))
    .OrderBy(g=>g.Missing).ThenBy(g=>!visible.Contains(g.Id))
    .Select(g=>new Game{Id=g.Id,StoreId=g.StoreId,Name=g.Name,Source=g.Source,Install=g.Install,Target=g.Target,Cover=g.RefreshCover?"":g.Cover,Banner=g.Banner,Icon=g.Icon,Rom=g.Rom,PortData=g.PortData,Platform=g.Platform,Missing=g.Missing}).ToArray();
-  if(missing.Length==0){if(manual)message.Text="Sem capas compatíveis pendentes. Para outras capas, use Editar.";return;}
-  loadingArt=true;message.Text="Buscando capas e banners…";
+  if(missing.Length==0){if(manual)message.Text=UiLanguage.Text("Sem capas compatíveis pendentes. Para outras capas, use Editar.");return;}
+  loadingArt=true;message.Text=UiLanguage.Text("Buscando capas e banners…");
   try{
    int newCovers=0,newBanners=0,newIcons=0;
    for(int offset=0;offset<missing.Length;offset+=20){
@@ -419,21 +420,21 @@ public partial class Hub : Form {
     if(result.Count>0){Save();UpdateVisibleArtwork();}
    }
    if(newCovers+newBanners+newIcons>0){Notify(newCovers+" capas, "+newBanners+" banners e "+newIcons+" ícones adicionados.");}
-   else message.Text="Nenhuma imagem nova disponível. Use Editar para selecionar uma capa.";
-  }catch(Exception error){if(!IsDisposed){Log(error.ToString());if(report!=null)report.ArtFailed=true;message.Text="Falha ao buscar capas. Consulte nexus.log.";}}
+   else message.Text=UiLanguage.Text("Nenhuma imagem nova disponível. Use Editar para selecionar uma capa.");
+  }catch(Exception error){if(!IsDisposed){Log(error.ToString());if(report!=null)report.ArtFailed=true;message.Text=UiLanguage.Text("Falha ao buscar capas. Consulte nexus.log.");}}
   finally{loadingArt=false;if(refreshArtRequested&&!IsDisposed){refreshArtRequested=false;LoadArt(false);}}
  }
  async void Play(Game g){
   try{
    if(running.Contains(g.Id))return;
-   if(!Installed(g))throw new IOException("Este jogo ainda não está instalado ou o arquivo foi movido.");
-   if(g.Target=="")throw new IOException("Configure o executável ou protocolo pelo botão Editar.");
-   if(g.Rom!=""&&!File.Exists(g.Rom))throw new IOException("ROM não encontrada.");
-   if(g.PortData!=""&&!File.Exists(g.PortData))throw new IOException("Arquivo de dados do port não encontrado. Atualize o caminho em Editar.");
+   if(!Installed(g))throw new IOException(UiLanguage.Text("Este jogo ainda não está instalado ou o arquivo foi movido."));
+   if(g.Target=="")throw new IOException(UiLanguage.Text("Configure o executável ou protocolo pelo botão Editar."));
+   if(g.Rom!=""&&!File.Exists(g.Rom))throw new IOException(UiLanguage.Text("ROM não encontrada."));
+   if(g.PortData!=""&&!File.Exists(g.PortData))throw new IOException(UiLanguage.Text("Arquivo de dados do port não encontrado. Atualize o caminho em Editar."));
    var args=RomLibrary.Arguments(g);
    Process process;
    if(XboxGames.IsTarget(g.Target)){
-    if(g.Missing)throw new IOException("O Windows não encontrou o jogo na última atualização.");
+    if(g.Missing)throw new IOException(UiLanguage.Text("O Windows não encontrou o jogo na última atualização."));
     XboxGames.Launch(g.Target,args);g.Last=DateTime.Now;Save();RefreshList();return;
    }
    if(IsUri(g.Target)){
@@ -441,17 +442,17 @@ public partial class Hub : Form {
     if(process!=null)process.Dispose();
     g.Last=DateTime.Now;Save();RefreshList();return;
    }
-   if(!File.Exists(g.Target))throw new IOException("Arquivo não encontrado: "+g.Target);
+   if(!File.Exists(g.Target))throw new IOException(UiLanguage.Text("Arquivo não encontrado: ")+g.Target);
    var ext=Path.GetExtension(g.Target).ToLowerInvariant();var script=ext==".cmd"||ext==".bat"||ext==".ps1";
    if(script&&MessageBox.Show(this,"Executar este script local?\n\n"+g.Target,"Confirmar execução",MessageBoxButtons.YesNo,MessageBoxIcon.Warning,MessageBoxDefaultButton.Button2)!=DialogResult.Yes)return;
    var info=new ProcessStartInfo(g.Target,args){WorkingDirectory=g.Folder!=""?g.Folder:Path.GetDirectoryName(g.Target),UseShellExecute=ext!=".exe"&&!script};
    if(ext==".ps1"){info.FileName=Path.Combine(Environment.SystemDirectory,@"WindowsPowerShell\v1.0\powershell.exe");info.Arguments="-NoProfile -File \""+g.Target+"\" "+args;}
    else if(script){
-    if(Regex.IsMatch(args+g.Target,"[&|<>^%!\\r\\n]"))throw new IOException("Caracteres de controle do CMD não são aceitos em caminhos ou argumentos.");
+    if(Regex.IsMatch(args+g.Target,"[&|<>^%!\\r\\n]"))throw new IOException(UiLanguage.Text("Caracteres de controle do CMD não são aceitos em caminhos ou argumentos."));
     info.FileName=Path.Combine(Environment.SystemDirectory,"cmd.exe");info.Arguments="/d /v:off /s /c \"\""+g.Target+"\" "+args+"\"";
    }
    if(!info.UseShellExecute)foreach(var line in g.Environment.Split(new[]{'\r','\n',';'},StringSplitOptions.RemoveEmptyEntries)){
-    var eq=line.IndexOf('=');if(eq<1)throw new IOException("Informe variáveis no formato NOME=valor.");info.EnvironmentVariables[line.Substring(0,eq).Trim()]=line.Substring(eq+1);
+    var eq=line.IndexOf('=');if(eq<1)throw new IOException(UiLanguage.Text("Informe variáveis no formato NOME=valor."));info.EnvironmentVariables[line.Substring(0,eq).Trim()]=line.Substring(eq+1);
    }
    process=Process.Start(info);
    var start=DateTime.Now;g.Last=start;
@@ -478,7 +479,7 @@ public partial class Hub : Form {
     if(process!=null)process.Dispose();Save();RefreshList();return;
    }
    running.Add(g.Id);StartDiscordSession(g,start);UpdateRecent();Safe(Save);
-   if(g.Rom!=""&&!data.DiscordEnabled)message.Text="Atividade do Discord desativada. Para ativar, abra Configurações → Social.";
+   if(g.Rom!=""&&!data.DiscordEnabled)message.Text=UiLanguage.Text("Atividade do Discord desativada. Para ativar, abra Configurações → Social.");
    if(data.Minimize&&WindowState!=FormWindowState.Minimized){gameWindowState=WindowState;WindowState=FormWindowState.Minimized;}
    try{await Task.Run(()=>{using(process)process.WaitForExit();});}
    finally{running.Remove(g.Id);EndDiscordSession(g);}
@@ -495,7 +496,7 @@ public partial class Hub : Form {
   if(!padAvailable)return;
   Pad p=new Pad();bool active=false;
   try{for(uint i=0;i<4;i++)if(XInputGetState(i,out p)==0){active=true;break;}}catch(DllNotFoundException){padAvailable=false;return;}
-  controller.Text=active?"Controle conectado":"Sem controle";
+  controller.Text=UiLanguage.Text(active?"Controle conectado":"Sem controle");
   if(!active||Form.ActiveForm!=this){previousPad=0;return;}
   int buttons=p.Buttons;
   if(p.Y>19000)buttons|=1;if(p.Y<-19000)buttons|=2;if(p.X<-19000)buttons|=4;if(p.X>19000)buttons|=8;
@@ -519,7 +520,7 @@ public partial class Hub : Form {
   if((pressed&0x1000)!=0&&list.Items.Count>0){if(list.SelectedItems.Count>0&&list.SelectedItems[0].Tag==null){if(list.SelectedItems[0].Name!="empty-collection"){page+=150;RefreshList();LoadArt(false);}}else if(selected!=null){if((RequiresPlayButton(selected)||!Installed(selected))&&playButton!=null){if(playButton.Focused)playButton.PerformClick();else playButton.Focus();}else ChoosePlay(selected);}}
  }
  void VirtualSearch(){
-  using(var f=new Form{Text="Pesquisar na biblioteca",StartPosition=FormStartPosition.CenterParent,Size=new Size(520,360),BackColor=surface,ForeColor=Color.White}){
+  using(var f=new Form{Text=UiLanguage.Text("Pesquisar na biblioteca"),StartPosition=FormStartPosition.CenterParent,Size=new Size(520,360),BackColor=surface,ForeColor=Color.White}){
    var input=new TextBox{Dock=DockStyle.Top,Text=search.Text};
    var grid=new FlowLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(12)};
    var keys=new List<Button>();
@@ -568,16 +569,24 @@ static class Program {
    using(var lockFile=LockData()){
     Storage.MigrateLegacy();
     var library=File.Exists(Storage.FileName)?Storage.Read(Storage.FileName):new Library();
-    if(library==null)throw new IOException("Biblioteca inválida.");
+    if(library==null)throw new IOException(UiLanguage.Text("Biblioteca inválida."));
     if(library.RestoreArchivedGames()|library.MigrateCategories())Storage.Write(library);
+    UiLanguage.Select(library.Language);
     WindowsShortcuts.FirstRun(library);
     try{WindowsShortcuts.RepairStartup();}
     catch(Exception error){
      if(!(error is IOException||error is UnauthorizedAccessException||error is COMException))throw;
-     MessageBox.Show("Não foi possível atualizar a inicialização do FitaHex. "+error.Message,
+     MessageBox.Show(UiLanguage.Text("Não foi possível atualizar a inicialização do FitaHex. ")+error.Message,
       ProductIdentity.Name,MessageBoxButtons.OK,MessageBoxIcon.Warning);
     }
-    Application.Run(new Hub(library,true,true));
+    bool reload;
+    do{
+     UiLanguage.Select(library.Language);
+     using(var window=new Hub(library,true,true)){
+      Application.Run(window);reload=window.ReloadLanguage;
+     }
+     if(reload)library=Storage.Read(Storage.FileName);
+    }while(reload);
    }
    return 0;
   }catch(Exception e){MessageBox.Show(e.Message,ProductIdentity.Name,MessageBoxButtons.OK,MessageBoxIcon.Error);return 1;}
@@ -585,7 +594,17 @@ static class Program {
  static FileStream LockData(){
   Directory.CreateDirectory(Storage.Root);
   try{return new FileStream(Path.Combine(Storage.Root,"fitahex.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None);}
-  catch(IOException){throw new IOException("A biblioteca está em uso por outra instância ou a pasta não está disponível.");}
+  catch(IOException){throw new IOException(UiLanguage.Text("A biblioteca está em uso por outra instância ou a pasta não está disponível."));}
+ }
+ static void VerifyLanguages(){
+  var br=new System.Globalization.CultureInfo("pt-BR");
+  var us=new System.Globalization.CultureInfo("en-US");
+  if(UiLanguage.UseEnglish("",br)||!UiLanguage.UseEnglish("",us)||
+   !UiLanguage.UseEnglish("en",br)||UiLanguage.UseEnglish("pt-BR",us))throw new IOException("Idioma automático.");
+  UiLanguage.Select("en");
+  try{
+   using(var window=new Hub(new Library{Language="en"}))window.VerifyEnglishLabels();
+  }finally{UiLanguage.Select("pt-BR");}
  }
  static void TestLegacyMigration(string fixture){
   var legacy=Path.Combine(fixture,"Legacy");var destination=Path.Combine(fixture,"New");
@@ -597,27 +616,27 @@ static class Program {
   File.WriteAllText(oldFile,new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(saved));
   if(!Storage.MigrateLegacy(legacy,destination)||Storage.MigrateLegacy(legacy,destination)||
    !File.Exists(oldFile)||!File.Exists(Path.Combine(destination,"images","cover.png")))
-   throw new IOException("Migração dos dados locais.");
+   throw new IOException(UiLanguage.Text("Migração dos dados locais."));
   var restored=Storage.Read(Path.Combine(destination,"library.json"));
   if(restored.Theme!="Sand"||!restored.TourShown||restored.Games.Single().Seconds!=7200||!restored.Games.Single().Completed)
-   throw new IOException("Dados migrados incompletos.");
+   throw new IOException(UiLanguage.Text("Dados migrados incompletos."));
  }
  static void TestUninstalledHistory(string fixture){
   var library=new Library();
   var game=new Game{Name="Jogo",StoreId="steam:404",Source="Steam",Install=fixture,Seconds=300,Completed=true};
   library.Games.Add(game);
   Stores.Merge(library,new List<Game>(),"");
-  if(!game.Missing||!Hub.InUninstalledHistory(game))throw new IOException("Histórico Steam.");
+  if(!game.Missing||!Hub.InUninstalledHistory(game))throw new IOException(UiLanguage.Text("Histórico Steam."));
   Stores.Merge(library,new List<Game>{new Game{StoreId=game.StoreId,Source=game.Source,Install=fixture}},"");
-  if(library.Games.Count!=1||game.Missing||!game.RefreshCover||!game.Completed||game.Seconds!=300)throw new IOException("Reinstalação Steam.");
+  if(library.Games.Count!=1||game.Missing||!game.RefreshCover||!game.Completed||game.Seconds!=300)throw new IOException(UiLanguage.Text("Reinstalação Steam."));
   var rom=new Game{Name="Nome editado",Rom=Path.Combine(fixture,"old","Puzzle.gba"),Target="mgba.exe",
    Platform="Game Boy / GBA",Source="Emulador",Seconds=90,Completed=true};
   library.ArchivedGames.Add(rom);
-  if(!library.RestoreArchivedGames()||!rom.Archived||!Hub.InUninstalledHistory(rom))throw new IOException("Histórico anterior.");
+  if(!library.RestoreArchivedGames()||!rom.Archived||!Hub.InUninstalledHistory(rom))throw new IOException(UiLanguage.Text("Histórico anterior."));
   var moved=new Game{Rom=Path.Combine(fixture,"new","Puzzle.gba"),Target="mgba.exe",Platform=rom.Platform,Source=rom.Source};
-  if(Hub.MatchUninstalled(library,moved)!=rom)throw new IOException("ROM movida.");
+  if(Hub.MatchUninstalled(library,moved)!=rom)throw new IOException(UiLanguage.Text("ROM movida."));
   Hub.RecordInstallation(rom);
-  if(rom.Archived||rom.Missing||!rom.Completed||rom.Seconds!=90)throw new IOException("Progresso da ROM.");
+  if(rom.Archived||rom.Missing||!rom.Completed||rom.Seconds!=90)throw new IOException(UiLanguage.Text("Progresso da ROM."));
  }
  static void TestRoms(string fixture){
   var folder=Path.Combine(fixture,"ROMs de teste");var nested=Path.Combine(folder,"Outra pasta");
@@ -626,7 +645,7 @@ static class Program {
   File.WriteAllText(first,"fixture");File.WriteAllText(second,"fixture");File.WriteAllText(Path.Combine(folder,"notes.txt"),"fixture");
   var configured=RomLibrary.Detect(Path.Combine(fixture,"Dolphin.exe"));
   var files=RomLibrary.Find(folder,configured.Extensions);
-  if(files.Length!=2||!files.Contains(second)||!configured.Args.Contains("-e"))throw new IOException("Importação de ROMs.");
+  if(files.Length!=2||!files.Contains(second)||!configured.Args.Contains("-e"))throw new IOException(UiLanguage.Text("Importação de ROMs."));
   var deeper=Path.Combine(nested,"3DS","Meus jogos");
   Directory.CreateDirectory(deeper);
   var cartridge=Path.Combine(deeper,"Aventura.3DS");var compressed=Path.Combine(deeper,"Puzzle.zcci");
@@ -636,7 +655,7 @@ static class Program {
   var detected3ds=RomLibrary.Find(folder,RomLibrary.Detect(azahar.Target).Extensions);
   if(azahar.Platform!="Nintendo 3DS"||!RomLibrary.Find(folder,azahar.Extensions).Contains(cartridge)||
      detected3ds.Length!=2||!detected3ds.Contains(compressed)||RomLibrary.Arguments(RomLibrary.NewGame(azahar,cartridge))!="\""+cartridge+"\"")
-   throw new IOException("Azahar, formatos e subpastas.");
+   throw new IOException(UiLanguage.Text("Azahar, formatos e subpastas."));
   var handheld=Path.Combine(deeper,"Jogo.gba");File.WriteAllText(handheld,"fixture");
   var ps=Path.Combine(nested,"Jogo de teste PS5");Directory.CreateDirectory(ps);
   var boot=Path.Combine(ps,"EBOOT.BIN");File.WriteAllText(boot,"fixture");
@@ -646,38 +665,38 @@ static class Program {
   if(!genericFiles.Contains(handheld)||!genericFiles.Contains(second)||!genericFiles.Contains(boot)||
      genericFiles.Any(file=>Path.GetFileName(file)=="dados.bin")||
      RomLibrary.NewGame(generic,boot).Name!="Jogo de teste PS5")
-   throw new IOException("Busca automática para emulador sem configuração.");
+   throw new IOException(UiLanguage.Text("Busca automática para emulador sem configuração."));
   var game=RomLibrary.NewGame(configured,first);var other=RomLibrary.NewGame(configured,second);
-  if(game.Name!="Corrida de teste"||game.Cover!=""||game.Rom!=first||game.Target!=configured.Target||game.Source!="Emulador")throw new IOException("Cadastro de ROM.");
+  if(game.Name!="Corrida de teste"||game.Cover!=""||game.Rom!=first||game.Target!=configured.Target||game.Source!="Emulador")throw new IOException(UiLanguage.Text("Cadastro de ROM."));
   var moved=Path.Combine(nested,Path.GetFileName(first));File.Copy(first,moved,true);
   game.Rom=RomLibrary.ResolvePath(nested,game.Rom);
-  if(game.Rom!=moved||other.Rom!=second||!RomLibrary.Arguments(game).EndsWith("\""+moved+"\""))throw new IOException("Caminho individual.");
+  if(game.Rom!=moved||other.Rom!=second||!RomLibrary.Arguments(game).EndsWith("\""+moved+"\""))throw new IOException(UiLanguage.Text("Caminho individual."));
   var port=new Game{Source="Port",PortData=moved,Args="--check-rom {game_path}"};
-  if(!Hub.RequiresPlayButton(game)||!Hub.RequiresPlayButton(port)||RomLibrary.Arguments(port)!="--check-rom \""+moved+"\"")throw new IOException("Abertura de port.");
+  if(!Hub.RequiresPlayButton(game)||!Hub.RequiresPlayButton(port)||RomLibrary.Arguments(port)!="--check-rom \""+moved+"\"")throw new IOException(UiLanguage.Text("Abertura de port."));
   port.PortData="";port.Args="";
-  if(RomLibrary.Arguments(port)!="")throw new IOException("Port com jogo embutido.");
+  if(RomLibrary.Arguments(port)!="")throw new IOException(UiLanguage.Text("Port com jogo embutido."));
   var executable=System.Reflection.Assembly.GetExecutingAssembly().Location;
   game.Args="--check-rom \"{rom_path}\"";
   var info=new ProcessStartInfo(executable,RomLibrary.Arguments(game)){UseShellExecute=false,CreateNoWindow=true};
   using(var child=Process.Start(info)){
-   if(!child.WaitForExit(6000)){child.Kill();throw new IOException("O emulador de teste não encerrou.");}
-   if(child.ExitCode!=0||File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"rom-child.txt"))!=moved)throw new IOException("O caminho não chegou ao emulador de teste.");
+   if(!child.WaitForExit(6000)){child.Kill();throw new IOException(UiLanguage.Text("O emulador de teste não encerrou."));}
+   if(child.ExitCode!=0||File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"rom-child.txt"))!=moved)throw new IOException(UiLanguage.Text("O caminho não chegou ao emulador de teste."));
   }
   using(var dialog=new CustomGameDialog(game,false,Color.Black,Color.FromArgb(35,32,45),Color.MediumPurple)){
    dialog.CreateControl();
-   if(dialog.GameName!=game.Name||dialog.Cover!="")throw new IOException("Editor de ROM.");
+   if(dialog.GameName!=game.Name||dialog.Cover!="")throw new IOException(UiLanguage.Text("Editor de ROM."));
   }
  }
  static void TestInstallation(string fixture){
   var game=new Game{StoreId="steam:77",Name="Jogo remoto",Source="Steam",Missing=true};
   var recent=new HashSet<string>{game.Id};
-  if(Hub.LibraryGroup(game,recent,false)!=3||Hub.InstallLink(game)!="steam://install/77")throw new IOException("Instalação Steam.");
+  if(Hub.LibraryGroup(game,recent,false)!=3||Hub.InstallLink(game)!="steam://install/77")throw new IOException(UiLanguage.Text("Instalação Steam."));
   var library=new Library();library.Games.Add(game);
   library.Games.Add(new Game{Source="Epic Games",Name=game.Name,StoreId="epic:another-platform"});
   Stores.Merge(library,new List<Game>{new Game{StoreId="steam:77",Install=fixture,Source="Steam"}},"Epic: ignorada");
-  if(game.Missing||Hub.LibraryGroup(game,recent,true)!=0||library.Games.Count!=2)throw new IOException("Promoção de instalação.");
+  if(game.Missing||Hub.LibraryGroup(game,recent,true)!=0||library.Games.Count!=2)throw new IOException(UiLanguage.Text("Promoção de instalação."));
   var epic=new Game{Source="Epic Games",StoreId="epic:sample",Target=Stores.EpicUri("sample")};
-  if(!Hub.InstallLink(epic).EndsWith("?action=installer"))throw new IOException("Instalação Epic.");
+  if(!Hub.InstallLink(epic).EndsWith("?action=installer"))throw new IOException(UiLanguage.Text("Instalação Epic."));
  }
  static int SelfTest(){
   try{
@@ -717,19 +736,19 @@ static class Program {
    if(coverIndex.Length!=2||CustomArtwork.Rank(coverIndex,usa,"The Legend of Zelda: Majora's Mask 3D").FirstOrDefault()!=usa||
       !CustomArtwork.Urls(rom3ds).First().StartsWith("https://thumbnails.libretro.com/")||
       !CustomArtwork.VerifiedCovers(rom3ds).Any(url=>url.EndsWith("/AJRE.png")))
-    throw new IOException("Catálogo de capas de Nintendo 3DS: "+coverIndex.Length+" / "+String.Join("|",CustomArtwork.Rank(coverIndex,usa,rom3ds.Name))+" / "+String.Join("|",CustomArtwork.VerifiedCovers(rom3ds)));
+    throw new IOException(UiLanguage.Text("Catálogo de capas de Nintendo 3DS: ")+coverIndex.Length+" / "+String.Join("|",CustomArtwork.Rank(coverIndex,usa,rom3ds.Name))+" / "+String.Join("|",CustomArtwork.VerifiedCovers(rom3ds)));
    var fireRed=new Game{Name="Pokémon FireRed",Rom=Path.Combine(fixture,"1636 - Pokemon Fire Red (U)(Squirrels).gba")};
    if(!CustomArtwork.VerifiedCovers(fireRed).Any(url=>url.Contains("a60aefb6"))||
       CustomArtwork.SteamMatch(@"{""items"":[{""id"":42,""name"":""OBS Studio""},{""id"":43,""name"":""OBS Studio DLC""}]}", "OBS Studio")!="42"||
       !new Library().DiscordEnabled||new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<Library>(@"{""DiscordEnabled"":false}").DiscordEnabled)
-    throw new IOException("Capas de jogos avulsos e padrão Discord.");
+    throw new IOException(UiLanguage.Text("Capas de jogos avulsos e padrão Discord."));
    var tiff=Path.Combine(fixture,"imagem.tiff");
    using(var sample=new Bitmap(123,145))sample.Save(tiff,System.Drawing.Imaging.ImageFormat.Tiff);
    var importedTiff=Storage.Asset(tiff);
    using(var picture=Storage.Picture(importedTiff))
-    if(!importedTiff.EndsWith(".png")||picture==null||picture.Height!=145)throw new IOException("Importação de capa TIFF.");
+    if(!importedTiff.EndsWith(".png")||picture==null||picture.Height!=145)throw new IOException(UiLanguage.Text("Importação de capa TIFF."));
    var romArt=new Game{Name="Pokémon Emerald",Rom=Path.Combine(fixture,"cover.gba")};
-   if(CustomArtwork.Find(romArt).Cover==""||!CustomArtwork.Urls(romArt).First().Contains("Game%20Boy%20Advance"))throw new IOException("Capa automática de ROM.");
+   if(CustomArtwork.Find(romArt).Cover==""||!CustomArtwork.Urls(romArt).First().Contains("Game%20Boy%20Advance"))throw new IOException(UiLanguage.Text("Capa automática de ROM."));
    game=loaded.Games[0];game.Cover=Artwork.SaveFile(cover,true);game.Missing=false;
    if(game.Cover=="")throw new Exception("Capa.");
    using(var picture=Storage.Picture(game.Cover))if(picture==null||picture.Height!=300)throw new Exception("Cache visual.");
@@ -742,8 +761,8 @@ static class Program {
       !Artwork.GogCoverUrls(@"{""images"":{""logo"":""//images.gog.com/test.png""}}").Contains("https://images.gog.com/test.png")||
       OwnedGames.GalaxyOwnedGame("origin_OFFER:42","EA").Source!="EA app"||
       !OwnedGames.GalaxyOwnedGame("battlenet_wow","World of Warcraft").Missing)
-    throw new IOException("Capas e biblioteca de launchers.");
-   TestLegacyMigration(fixture);UpdateReport.Verify();Playtime.Verify();TestUninstalledHistory(fixture);TestRoms(fixture);WindowsShortcuts.Verify(fixture);Hub.TestDiscordPresence();FolderPicker.Verify(fixture);
+    throw new IOException(UiLanguage.Text("Capas e biblioteca de launchers."));
+   VerifyLanguages();TestLegacyMigration(fixture);UpdateReport.Verify();Playtime.Verify();TestUninstalledHistory(fixture);TestRoms(fixture);WindowsShortcuts.Verify(fixture);Hub.TestDiscordPresence();FolderPicker.Verify(fixture);
    loaded.AutoScan=false;
    var largeLibrary=new Library{AutoScan=false};
    for(int index=1;index<=380;index++)largeLibrary.Games.Add(new Game{
@@ -755,7 +774,7 @@ static class Program {
     form.Shown+=(s,e)=>form.BeginInvoke(new Action(()=>{using(var screenshot=new Bitmap(form.Width,form.Height)){form.DrawToBitmap(screenshot,new Rectangle(0,0,form.Width,form.Height));screenshot.Save(Path.Combine(Storage.Root,"window.png"));}try{form.VerifyVisuals();form.VerifyTray();}catch(Exception error){verification=error;}form.ExitFromTray();}));
     Application.Run(form);
    }
-   if(verification!=null)throw new InvalidOperationException("Interface.",verification);
+   if(verification!=null)throw new InvalidOperationException(UiLanguage.Text("Interface."),verification);
    File.WriteAllText(Path.Combine(Storage.Root,"self-test.txt"),"OK");
    return 0;
   }catch(Exception e){Directory.CreateDirectory(Storage.Root);File.WriteAllText(Path.Combine(Storage.Root,"self-test.txt"),e.ToString());return 1;}

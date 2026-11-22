@@ -55,7 +55,7 @@ static class FolderPicker {
    IShellItem item;
    dialog.GetFolder(out item);
    if((options&PickFolders)==0||!String.Equals(ReadPath(item),initialDirectory,StringComparison.OrdinalIgnoreCase))
-    throw new IOException("Seletor de pastas do Explorador.");
+    throw new IOException(UiLanguage.Text("Seletor de pastas do Explorador."));
   }finally{Marshal.ReleaseComObject(dialog);}
  }
 

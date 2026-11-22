@@ -7,7 +7,12 @@ using System.Windows.Forms;
 
 public partial class Hub {
 
- string SectionTitle(){return section=="Jogos"?"Biblioteca":section.StartsWith("shelf:")?section.Substring(6):section;}
+ internal void VerifyEnglishLabels(){
+  if(navigation["Jogos"].Text!="Library"||navigation["Configurações"].Text!="Settings"||
+   list.Columns[0].Text!="Game"||UiLanguage.Text("Instalados e adicionados")!="Installed and added")
+    throw new InvalidOperationException("English interface labels.");
+ }
+ string SectionTitle(){return section=="Jogos"?UiLanguage.Text("Biblioteca"):section.StartsWith("shelf:")?section.Substring(6):UiLanguage.Text(section);}
  int LibraryView{get{return data.LibraryView??(data.ListView?1:0);}}
  void SetLibraryView(int value){
   if(LibraryView==value)return;
@@ -28,14 +33,14 @@ public partial class Hub {
   button=Action(toolbar,name+" ▾",()=>ShowMenu(button,labels,actions));
   button.AccessibleName=name;
   var hint=new ToolTip();
-  Action update=()=>{button.Text=combo.SelectedIndex==0?"Ordenar · A–Z ▾":combo.SelectedItem+" ▾";hint.SetToolTip(button,name);};
+  Action update=()=>{button.Text=combo.SelectedIndex==0?UiLanguage.Text("Ordenar · A–Z ▾"):combo.SelectedItem+" ▾";hint.SetToolTip(button,name);};
   combo.SelectedIndexChanged+=(s,e)=>update();button.Disposed+=(s,e)=>hint.Dispose();update();
  }
  void ClearCards(){foreach(var image in cardImages)image.Dispose();cardImages.Clear();thumbnails.Clear();}
  void ShowMenu(Control anchor,string[] labels,Action[] actions){
   var menu=StyledMenu();
   for(int i=0;i<labels.Length;i++){
-   var action=actions[i];var item=new ToolStripMenuItem(labels[i]){ForeColor=ForeColor,Padding=new Padding(8,5,16,5)};
+   var action=actions[i];var item=new ToolStripMenuItem(UiLanguage.Text(labels[i])){ForeColor=ForeColor,Padding=new Padding(8,5,16,5)};
    item.Click+=(s,e)=>Safe(action);menu.Items.Add(item);
   }
   menu.Show(anchor,new Point(0,anchor.Height+5));
@@ -145,22 +150,22 @@ public partial class Hub {
     texture.TranslateTransform(art.Left+(art.Width-image.Width*scale)/2,art.Top+(art.Height-image.Height*scale)/2);
     texture.ScaleTransform(scale,scale);
     g.FillPath(texture,curve);
-    if(e.Item.SubItems.Count>4&&e.Item.SubItems[4].Text!="Instalado")
+    if(e.Item.SubItems.Count>4&&e.Item.SubItems[4].Text!=UiLanguage.Text("Instalado"))
      using(var shade=new SolidBrush(Color.FromArgb(94,5,7,13)))g.FillPath(shade,curve);
    }
   }
   var game=e.Item.Tag as Game;
   if(game!=null&&art.Height>0)DrawOrigin(g,Origin(game),new Rectangle(art.X+6,art.Y+6,25,25),game);
-  if(game!=null&&hover>0)DrawCardActions(g,art,game,e.Item.SubItems[4].Text=="Instalado",hover);
+  if(game!=null&&hover>0)DrawCardActions(g,art,game,e.Item.SubItems[4].Text==UiLanguage.Text("Instalado"),hover);
   TextRenderer.DrawText(g,e.Item.Text,Font,new Rectangle(bounds.X+5,art.Bottom+2,bounds.Width-10,Math.Max(1,bounds.Bottom-art.Bottom-3)),ForeColor,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.SingleLine);
  }
  NotifyIcon trayIcon;
  bool exitingFromTray;
  void SetupTray(){
   var trayMenu=new ContextMenuStrip();
-  trayMenu.Items.Add("Abrir "+ProductIdentity.Name,null,(sender,args)=>OpenFromTray());
+  trayMenu.Items.Add(UiLanguage.Text("Abrir ")+ProductIdentity.Name,null,(sender,args)=>OpenFromTray());
   trayMenu.Items.Add(new ToolStripSeparator());
-  trayMenu.Items.Add("Encerrar "+ProductIdentity.Name,null,(sender,args)=>ExitFromTray());
+  trayMenu.Items.Add(UiLanguage.Text("Encerrar ")+ProductIdentity.Name,null,(sender,args)=>ExitFromTray());
   trayIcon=new NotifyIcon{Icon=Icon??SystemIcons.Application,Text=ProductIdentity.Name,ContextMenuStrip=trayMenu};
   trayIcon.MouseClick+=(sender,args)=>{if(args.Button==MouseButtons.Left)OpenFromTray();};
   Shown+=(sender,args)=>trayIcon.Visible=true;
@@ -183,19 +188,19 @@ public partial class Hub {
  }
  internal void ExitFromTray(){exitingFromTray=true;Close();}
  internal void VerifyTray(){
-  if(trayIcon==null||!trayIcon.Visible)throw new InvalidOperationException("Ícone da bandeja indisponível.");
+  if(trayIcon==null||!trayIcon.Visible)throw new InvalidOperationException(UiLanguage.Text("Ícone da bandeja indisponível."));
   Close();
-  if(Visible||IsDisposed||!trayIcon.Visible)throw new InvalidOperationException("Recolher à bandeja.");
+  if(Visible||IsDisposed||!trayIcon.Visible)throw new InvalidOperationException(UiLanguage.Text("Recolher à bandeja."));
   OpenFromTray();
-  if(!Visible||IsDisposed)throw new InvalidOperationException("Restaurar pela bandeja.");
+  if(!Visible||IsDisposed)throw new InvalidOperationException(UiLanguage.Text("Restaurar pela bandeja."));
  }
  void SetupChrome(){
   chrome.Height=39;chrome.Dock=DockStyle.Top;chrome.Visible=false;
   var cap=new Label{Text=ProductIdentity.Name,Dock=DockStyle.Fill,Padding=new Padding(16,0,0,0),TextAlign=ContentAlignment.MiddleLeft};
   var controls=new SoftFlow{Width=132,Dock=DockStyle.Right,FlowDirection=FlowDirection.LeftToRight,WrapContents=false};
-  var minimize=Action(controls,"−",()=>WindowState=FormWindowState.Minimized);minimize.AccessibleName="Minimizar";
-  var maximize=Action(controls,"□",FlipMaximize);maximize.AccessibleName="Maximizar ou restaurar";
-  var close=Action(controls,"×",Close);close.AccessibleName="Fechar";
+  var minimize=Action(controls,"−",()=>WindowState=FormWindowState.Minimized);minimize.AccessibleName=UiLanguage.Text("Minimizar");
+  var maximize=Action(controls,"□",FlipMaximize);maximize.AccessibleName=UiLanguage.Text("Maximizar ou restaurar");
+  var close=Action(controls,"×",Close);close.AccessibleName=UiLanguage.Text("Fechar");
   foreach(Button button in controls.Controls){button.AutoSize=false;button.Width=39;button.Height=31;button.Margin=new Padding(2,3,2,0);}
   cap.MouseDown+=(s,e)=>{if(e.Button==MouseButtons.Left&&e.Clicks==1){ReleaseCapture();SendMessage(Handle,0xA1,new IntPtr(2),IntPtr.Zero);}};
   cap.DoubleClick+=(s,e)=>FlipMaximize();
@@ -247,23 +252,23 @@ public partial class Hub {
  internal void VerifyPagination(){
   var more=list.Items.Cast<ListViewItem>().LastOrDefault();
   if(list.Items.Count!=151||more==null||more.Tag!=null||more.Group==null||more.Group.Header!="Não instalados")
-   throw new InvalidOperationException("Paginação da biblioteca ao iniciar.");
+   throw new InvalidOperationException(UiLanguage.Text("Paginação da biblioteca ao iniciar."));
  }
  internal void VerifyVisuals(){
-  if(TextRenderer.MeasureText(brand.Text,brand.Font,Size.Empty,TextFormatFlags.NoPadding|TextFormatFlags.SingleLine).Width>brand.Width-brand.Padding.Horizontal)throw new InvalidOperationException("Marca truncada na barra lateral.");
-  if(brand.Text!=ProductIdentity.Name||!Text.StartsWith(ProductIdentity.Name)||!Storage.Root.EndsWith(ProductIdentity.Name))throw new InvalidOperationException("Identidade e compatibilidade.");
-  if(section!="Jogos"||!navigation["Jogos"].Active||navigation.ContainsKey("Início")||navigation.ContainsKey("Todos os jogos"))throw new InvalidOperationException("Tela inicial da biblioteca.");
+  if(TextRenderer.MeasureText(brand.Text,brand.Font,Size.Empty,TextFormatFlags.NoPadding|TextFormatFlags.SingleLine).Width>brand.Width-brand.Padding.Horizontal)throw new InvalidOperationException(UiLanguage.Text("Marca truncada na barra lateral."));
+  if(brand.Text!=ProductIdentity.Name||!Text.StartsWith(ProductIdentity.Name)||!Storage.Root.EndsWith(ProductIdentity.Name))throw new InvalidOperationException(UiLanguage.Text("Identidade e compatibilidade."));
+  if(section!="Jogos"||!navigation["Jogos"].Active||navigation.ContainsKey("Início")||navigation.ContainsKey("Todos os jogos"))throw new InvalidOperationException(UiLanguage.Text("Tela inicial da biblioteca."));
 
   var editionTest=new Game{Name="Teste multiplataforma",Source="Steam",Target="steam://run/71",StoreId="steam:71"};
   var secondEdition=new Game{Name="Teste multiplataforma™",Source="Epic Games",Target=Stores.EpicUri("test-edition"),StoreId="epic:test-edition"};
   data.Games.Add(editionTest);data.Games.Add(secondEdition);
-  if(PlayableEditions(editionTest).Length!=2)throw new InvalidOperationException("Seleção de launcher.");
+  if(PlayableEditions(editionTest).Length!=2)throw new InvalidOperationException(UiLanguage.Text("Seleção de launcher."));
   secondEdition.Missing=true;
-  if(PlayableEditions(secondEdition).Single()!=editionTest)throw new InvalidOperationException("Edição instalada.");
+  if(PlayableEditions(secondEdition).Single()!=editionTest)throw new InvalidOperationException(UiLanguage.Text("Edição instalada."));
   data.Games.Remove(editionTest);data.Games.Remove(secondEdition);
   var achievementTest=new Game{Name="Conquistas de teste",Source="Steam",Achievements=new AchievementProgress{Unlocked=1,Total=2,Entries=new System.Collections.Generic.List<AchievementEntry>{
-   new AchievementEntry{Name="Primeiro passo",Description="Conclua a primeira fase.",Unlocked=true},
-   new AchievementEntry{Name="Último desafio",Description="Complete todos os desafios."}
+   new AchievementEntry{Name="Primeiro passo",Description=UiLanguage.Text("Conclua a primeira fase."),Unlocked=true},
+   new AchievementEntry{Name="Último desafio",Description=UiLanguage.Text("Complete todos os desafios.")}
   }}};
   using(var achievements=new AchievementWindow(achievementTest,new[]{achievementTest},NexusTheme.Find(data.Theme))){
    Exception failure=null;
@@ -276,7 +281,7 @@ public partial class Hub {
   TestSources();
   TestCollections();
   Navigate("Social");
-  if(navigation.ContainsKey("social:conversas")||socialPlatforms.Length!=Launchers.Length||socialPlatforms.Where((platform,index)=>!navigation.ContainsKey("social:"+index)).Any()||!socialHost.Visible||socialOverview==null||!socialOverview.Visible)throw new InvalidOperationException("Submenu Social.");
+  if(navigation.ContainsKey("social:conversas")||socialPlatforms.Length!=Launchers.Length||socialPlatforms.Where((platform,index)=>!navigation.ContainsKey("social:"+index)).Any()||!socialHost.Visible||socialOverview==null||!socialOverview.Visible)throw new InvalidOperationException(UiLanguage.Text("Submenu Social."));
   using(var socialShot=new Bitmap(Width,Height)){
    DrawToBitmap(socialShot,new Rectangle(0,0,Width,Height));
    socialShot.Save(System.IO.Path.Combine(Storage.Root,"social.png"));
@@ -285,23 +290,23 @@ public partial class Hub {
   var normalSize=Size;
   Size=new Size(840,600);
   data.SidebarCollapsed=true;ApplyRail();BuildNav();
-  if(rail.Width>=90||!navigation["Jogos"].IconOnly||galleryArea.Width<=450)throw new InvalidOperationException("Layout em janela pequena.");
+  if(rail.Width>=90||!navigation["Jogos"].IconOnly||galleryArea.Width<=450)throw new InvalidOperationException(UiLanguage.Text("Layout em janela pequena."));
   using(var small=new Bitmap(Width,Height)){
    DrawToBitmap(small,new Rectangle(0,0,Width,Height));
    small.Save(System.IO.Path.Combine(Storage.Root,"compact-window.png"));
   }
   data.SidebarCollapsed=false;ApplyRail();BuildNav();Size=normalSize;
-  if(navigation.ContainsKey("social:0"))throw new InvalidOperationException("Submenu Social recolhido.");
+  if(navigation.ContainsKey("social:0"))throw new InvalidOperationException(UiLanguage.Text("Submenu Social recolhido."));
 
   var initial=navigation["Jogos"];
   Navigate("Jogos");
-  if(!toolbar.Visible||!hero.Visible||galleryArea.Top<hero.Bottom)throw new InvalidOperationException("Layout da biblioteca: "+toolbar.Visible+" "+hero.Visible+" "+galleryArea.Bounds+" "+hero.Bounds);
+  if(!toolbar.Visible||!hero.Visible||galleryArea.Top<hero.Bottom)throw new InvalidOperationException(UiLanguage.Text("Layout da biblioteca: ")+toolbar.Visible+" "+hero.Visible+" "+galleryArea.Bounds+" "+hero.Bounds);
   var remote=new Game{Name="Disponível para instalar",Source="Steam",Missing=true,StoreId="steam:99",Target="steam://run/99",
    Cover=data.Games.First(g=>g.Cover!="").Cover};
   data.Games.Add(remote);RefreshList();
   if(list.Items.Cast<ListViewItem>().Single(row=>row.Tag==remote).Group.Header!="Não instalados"||
      list.Items.Cast<ListViewItem>().Any(row=>row.Tag!=remote&&row.Group.Header!="Instalados e adicionados"))
-   throw new InvalidOperationException("Grupos de instalação.");
+   throw new InvalidOperationException(UiLanguage.Text("Grupos de instalação."));
   list.Update();
   using(var screenshot=new Bitmap(Width,Height)){
    DrawToBitmap(screenshot,new Rectangle(0,0,Width,Height));
@@ -309,24 +314,24 @@ public partial class Hub {
   }
   data.Games.Remove(remote);RefreshList();
   int cached=cardImages.Count;
-  if(cached<2)throw new InvalidOperationException("Miniatura ausente.");
+  if(cached<2)throw new InvalidOperationException(UiLanguage.Text("Miniatura ausente."));
   Navigate("Favoritos");
-  if(!empty.Visible||list.Visible||!navigation["Favoritos"].Active)throw new InvalidOperationException("Estado vazio.");
+  if(!empty.Visible||list.Visible||!navigation["Favoritos"].Active)throw new InvalidOperationException(UiLanguage.Text("Estado vazio."));
   Navigate("Jogos");
-  if(!ReferenceEquals(initial,navigation["Jogos"])||cardImages.Count!=cached||!list.Visible)throw new InvalidOperationException("Navegação ou cache.");
+  if(!ReferenceEquals(initial,navigation["Jogos"])||cardImages.Count!=cached||!list.Visible)throw new InvalidOperationException(UiLanguage.Text("Navegação ou cache."));
   SetLibraryView(2);
-  if(covers.ImageSize.Width!=92||Storage.Read(Storage.FileName).LibraryView!=2)throw new InvalidOperationException("Vista compacta.");
-  SetLibraryView(1);if(list.View!=View.Details)throw new InvalidOperationException("Vista em lista.");
+  if(covers.ImageSize.Width!=92||Storage.Read(Storage.FileName).LibraryView!=2)throw new InvalidOperationException(UiLanguage.Text("Vista compacta."));
+  SetLibraryView(1);if(list.View!=View.Details)throw new InvalidOperationException(UiLanguage.Text("Vista em lista."));
   SetLibraryView(0);
   var initialBounds=Bounds;
   SetMode(1,true);
-  if(FormBorderStyle!=FormBorderStyle.None||!chrome.Visible||Storage.Read(Storage.FileName).WindowMode!=1)throw new InvalidOperationException("Janela sem borda.");
+  if(FormBorderStyle!=FormBorderStyle.None||!chrome.Visible||Storage.Read(Storage.FileName).WindowMode!=1)throw new InvalidOperationException(UiLanguage.Text("Janela sem borda."));
   SetMode(2,true);
-  if(chrome.Visible||Bounds!=Screen.FromControl(this).Bounds||Storage.Read(Storage.FileName).WindowMode!=2)throw new InvalidOperationException("Tela cheia.");
+  if(chrome.Visible||Bounds!=Screen.FromControl(this).Bounds||Storage.Read(Storage.FileName).WindowMode!=2)throw new InvalidOperationException(UiLanguage.Text("Tela cheia."));
   SetMode(1,true);
-  if(displayMode!=1||!chrome.Visible)throw new InvalidOperationException("Retorno de tela cheia.");
+  if(displayMode!=1||!chrome.Visible)throw new InvalidOperationException(UiLanguage.Text("Retorno de tela cheia."));
   SetMode(0,true);
-  if(FormBorderStyle!=FormBorderStyle.Sizable||chrome.Visible||Bounds!=initialBounds||Storage.Read(Storage.FileName).WindowMode!=0)throw new InvalidOperationException("Janela padrão.");
+  if(FormBorderStyle!=FormBorderStyle.Sizable||chrome.Visible||Bounds!=initialBounds||Storage.Read(Storage.FileName).WindowMode!=0)throw new InvalidOperationException(UiLanguage.Text("Janela padrão."));
   var savedTheme=data.Theme;
   foreach(var theme in NexusTheme.All){
    data.Theme=theme.Key;ApplyTheme();RefreshList();Update();
